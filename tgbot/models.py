@@ -1,8 +1,8 @@
 from django.db import models
 
 SKILL_LEVEL_CHOICES = [
-    ('beginner', 'Новичок'),
-    ('advanced', 'Новичок+'),
+    ('novice', 'Новичок'),
+    ('novice+', 'Новичок+'),
     ('junior', 'Джун')
 ]
 
@@ -11,6 +11,16 @@ class Student(models.Model):
     telegram_id = models.IntegerField(
         verbose_name='ID в telegram',
         primary_key=True
+    )
+    telegram_username = models.CharField(
+        verbose_name='Username в telegram',
+        max_length=100,
+        default=None
+    )
+    discord_username = models.CharField(
+        verbose_name='Username в discord',
+        max_length=100,
+        default=None
     )
     full_name = models.CharField(
         verbose_name='ФИО',
@@ -37,6 +47,13 @@ class Student(models.Model):
         blank=True
     )
 
+    def __str__(self):
+        return self.full_name
+
+    class Meta:
+        verbose_name = 'Ученик'
+        verbose_name_plural = 'Ученики'
+
 
 class ProjectManager(models.Model):
     telegram_id = models.IntegerField(
@@ -54,6 +71,13 @@ class ProjectManager(models.Model):
     projects_time_end = models.TimeField(
         verbose_name='Конец времени проектов'
     )
+
+    def __str__(self):
+        return self.full_name
+
+    class Meta:
+        verbose_name = 'ПМ'
+        verbose_name_plural = 'ПМы'
 
 
 class Project(models.Model):
