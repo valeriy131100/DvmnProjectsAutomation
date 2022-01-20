@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import datetime, timedelta
 
 SKILL_LEVEL_CHOICES = [
     ('novice', 'Новичок'),
@@ -69,6 +70,37 @@ class ProjectManager(models.Model):
 
     def __str__(self):
         return self.full_name
+
+    def get_time_slots(self):
+        start_time = self.projects_time_begin
+        end_time = self.projects_time_end
+        start_date = datetime.now().replace(
+            hour=start_time.hour,
+            minute=start_time.minute,
+            second=0,
+            microsecond=0
+        )
+        if end_time.hour > start_date.hour:
+            end_date = datetime.now()
+        else:
+            end_date = datetime.now()
+            end_date = end_date.replace(day=end_date.day + 1)
+        end_date = end_date.replace(
+            hour=end_time.hour,
+            minute=end_time.minute,
+            second=0,
+            microsecond=0
+        )
+
+        delta = end_date - start_date
+        minutes_delta = delta.seconds // 60
+        minutes_ranges = [i * 30 for i in range(minutes_delta // 30)]
+        time_ranges = [
+            (start_date + timedelta(minutes=minute_range)).time()
+            for minute_range in minutes_ranges
+        ]
+
+        return time_ranges
 
     class Meta:
         verbose_name = 'ПМ'
