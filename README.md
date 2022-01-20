@@ -15,20 +15,27 @@ TELEGRAM_TOKEN='ваш_токен'
 Для того, чтобы добавить всех студентов в базу данных, положите students.json в папку Students. Пример файла:
 ```json
 [
-    {
-        "name": "Александр Попов",
-        "level": "junior",
-        "tg_username": "@example",
-        "discord_username": "example#1234",
-        "is_far_east": "True"
-    },
-    {
-        "name": "Иван Петров",
-        "level": "novice+",
-        "tg_username": "@example2",
-        "discord_username": "example2#4321",
-        "is_far_east": "False"
-    }
+  {
+    "name": "Валерий Ефремов",
+    "level": "novice+",
+    "telegram_id": "ididididid",
+    "discord_username": "example#1234",
+    "is_far_east": "False"
+  },
+  {
+    "name": "Илья Габдрахманов",
+    "level": "novice",
+    "telegram_id": "ididididid",
+    "discord_username": "example2#4321",
+    "is_far_east": "False"
+  },
+  {
+    "name": "Максим Кутовой",
+    "level": "junior",
+    "telegram_id": "ididididid",
+    "discord_username": "example2#4321",
+    "is_far_east": "True"
+  }
 ]
 ```
 Запустите скрипт:
