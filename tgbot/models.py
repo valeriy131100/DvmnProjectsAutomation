@@ -81,6 +81,15 @@ class ProjectManager(models.Model):
 
 
 class Project(models.Model):
+    name = models.CharField(max_length=100)
+
+
+class ProjectTeam(models.Model):
+    project = models.ForeignKey(
+        Project,
+        related_name='teams',
+        on_delete=models.CASCADE
+    )
     project_manager = models.ForeignKey(
         ProjectManager,
         related_name='projects',
