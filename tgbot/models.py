@@ -12,10 +12,6 @@ class Student(models.Model):
         verbose_name='ID в telegram',
         primary_key=True
     )
-    telegram_username = models.CharField(
-        verbose_name='Username в telegram',
-        max_length=100,
-    )
     discord_username = models.CharField(
         verbose_name='Username в discord',
         max_length=100,
