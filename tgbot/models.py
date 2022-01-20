@@ -82,6 +82,10 @@ class ProjectManager(models.Model):
 class Project(models.Model):
     name = models.CharField(max_length=100)
 
+    class Meta:
+        verbose_name = 'Проект'
+        verbose_name_plural = 'Проекты'
+
 
 class ProjectTeam(models.Model):
     project = models.ForeignKey(
@@ -103,4 +107,8 @@ class ProjectTeam(models.Model):
     project_time = models.TimeField(
         verbose_name='Время собрания по проектам'
     )
+
+    class Meta:
+        verbose_name = 'Команда проекта'
+        verbose_name_plural = 'Команды проектов'
 
