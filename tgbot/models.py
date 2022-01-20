@@ -10,8 +10,8 @@ SKILL_LEVEL_CHOICES = [
 class Student(models.Model):
     telegram_id = models.IntegerField(
         verbose_name='ID в telegram',
-        primary_key=True,
-        blank=True
+        blank=True,
+        null=True
     )
     telegram_username = models.CharField(
         verbose_name='Username в telegram',
