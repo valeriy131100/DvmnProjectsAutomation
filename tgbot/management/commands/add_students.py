@@ -8,12 +8,9 @@ def is_far_east(student):
 
 
 def create_student(student):
-    Student.objects.get_or_create(
-        full_name=student['name'],
-        telegram_username=student['tg_username'])
-    current_student = Student.objects.get(
-        full_name=student['name']
-    )
+    current_student, created = Student.objects.get_or_create(
+        telegram_id=student['telegram_id'])
+    current_student.full_name = student['name']
     current_student.skill_level = student['level']
     current_student.discord_username = student['discord_username']
     current_student.from_far_east = (is_far_east(student['is_far_east']))
