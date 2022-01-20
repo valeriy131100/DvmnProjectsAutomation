@@ -76,7 +76,12 @@ class ProjectManager(models.Model):
 
 
 class Project(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(
+        max_length=100,
+        verbose_name='Проект')
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         verbose_name = 'Проект'
@@ -87,12 +92,14 @@ class ProjectTeam(models.Model):
     project = models.ForeignKey(
         Project,
         related_name='teams',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Проект'
     )
     project_manager = models.ForeignKey(
         ProjectManager,
         related_name='projects',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='ПМ'
     )
     students = models.ManyToManyField(
         Student,
@@ -103,6 +110,9 @@ class ProjectTeam(models.Model):
     project_time = models.TimeField(
         verbose_name='Время собрания по проектам'
     )
+
+    def __str__(self):
+        return f'{self.id} команда проекта "{self.project.name}"'
 
     class Meta:
         verbose_name = 'Команда проекта'
