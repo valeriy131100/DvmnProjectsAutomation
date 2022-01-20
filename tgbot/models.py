@@ -10,17 +10,17 @@ SKILL_LEVEL_CHOICES = [
 class Student(models.Model):
     telegram_id = models.IntegerField(
         verbose_name='ID в telegram',
-        primary_key=True
+        primary_key=True,
+        blank=True
     )
     telegram_username = models.CharField(
         verbose_name='Username в telegram',
         max_length=100,
-        default=None
     )
     discord_username = models.CharField(
         verbose_name='Username в discord',
         max_length=100,
-        default=None
+        blank=True
     )
     full_name = models.CharField(
         verbose_name='ФИО',

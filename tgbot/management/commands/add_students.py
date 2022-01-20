@@ -8,13 +8,16 @@ def is_far_east(student):
 
 
 def create_student(student):
-    student = Student.objects.get_or_create(
+    Student.objects.get_or_create(
         full_name=student['name'],
-        skill_level=student['level'],
-        telegram_username=student['tg_username'],
-        discord_username=student['discord_username'],
-        from_far_east=(is_far_east(student['is_far_east']))
+        telegram_username=student['tg_username'])
+    current_student = Student.objects.get(
+        full_name=student['name']
     )
+    current_student.skill_level = student['level']
+    current_student.discord_username = student['discord_username']
+    current_student.from_far_east = (is_far_east(student['is_far_east']))
+    current_student.save()
 
 
 def add_students_to_db():
