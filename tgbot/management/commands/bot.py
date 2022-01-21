@@ -109,12 +109,12 @@ def choose_time(update: Update, context: CallbackContext):
     student.project_date = date.fromisoformat(text)
     student.save()
 
-    # available_time = ProjectManager.objects.all().aggregate(
-    #     start_time=Min('projects_time_begin'),
-    #     end_time=Max('projects_time_end')
-    # )
-    # min_available_time = time.strftime(available_time['start_time'], '%H:%M')
-    # max_available_time = time.strftime(available_time['end_time'], '%H:%M')
+    available_time = ProjectManager.objects.all().aggregate(
+        start_time=Min('projects_time_begin'),
+        end_time=Max('projects_time_end')
+    )
+    min_available_time = time.strftime(available_time['start_time'], '%H:%M')
+    max_available_time = time.strftime(available_time['end_time'], '%H:%M')
 
     project_managers = ProjectManager.objects.all()
     for manager in project_managers:
@@ -135,24 +135,31 @@ def choose_time(update: Update, context: CallbackContext):
     else:
         update.message.reply_text(
 
-        #     'Созвоны с ПМом и командой будут проходить каждый день,'
-        #     'кроме субботы и воскресенья.' 
-        #     'И будут длиться примерно 30 мин \n\n'
-        #     'В какое время тебе было бы удобно созваниваться с ПМом?'
-        #     f'В интервале с  {min_available_time} по {max_available_time} '
-        #     '(время указано по МСК) \n\n'
-        #     f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
-        #     reply_markup=ReplyKeyboardRemove()
-        # )
+            'Созвоны с ПМом и командой будут проходить каждый день,'
+            'кроме субботы и воскресенья.' 
+            'И будут длиться примерно 30 мин \n\n'
+            'В какое время тебе было бы удобно созваниваться с ПМом?'
+            f'В интервале с  {min_available_time} по {max_available_time} '
+            '(время указано по МСК) \n\n'
+            f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
+            reply_markup=ReplyKeyboardRemove()
+        )
 
-            'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
-            '(время указано по МСК)',
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=build_menu(buttons, n_cols=5),
-                resize_keyboard=True
-            ))
+            # 'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
+            # '(время указано по МСК)',
+            # reply_markup=ReplyKeyboardMarkup(
+            #     keyboard=build_menu(buttons, n_cols=5),
+            #     resize_keyboard=True
+            # ))
 
         return 'write_time_to_db'
+
+
+def send_not(update: Update, context: CallbackContext, user_id):
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f'Проект будет!',
+    )
 
 
 def write_time_to_db(update: Update, context: CallbackContext):

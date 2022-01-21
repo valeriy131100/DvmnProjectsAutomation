@@ -10,6 +10,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='student',
+            name='project_date',
+            field=models.CharField(blank=True,
+                                   choices=[('2022-01-17', '2022-01-17'),
+                                            ('2022-01-24', '2022-01-24')],
+                                   max_length=50,
+                                   verbose_name='Дата начала проекта'),
+        ),
         migrations.RemoveField(
             model_name='student',
             name='project_date',

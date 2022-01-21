@@ -282,6 +282,11 @@ class ProjectTeam(models.Model):
     def get_lvl(self):
         return self.students.all()[0].get_lvl()
 
+    def notifications(self):
+        students = self.students
+        print(students)
+
+
     class Meta:
         verbose_name = 'Команда проекта'
         verbose_name_plural = 'Команды проектов'
