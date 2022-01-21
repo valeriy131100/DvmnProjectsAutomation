@@ -1,7 +1,10 @@
 import os
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
+from pprint import pprint
+
 
 from django.core.management.base import BaseCommand
+from django.db.models import Max, Min
 from dotenv import load_dotenv
 from telegram import (ForceReply, InlineKeyboardButton, InlineKeyboardMarkup,
                       ParseMode, ReplyKeyboardRemove, Update, chat,
@@ -10,7 +13,7 @@ from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, ConversationHandler, Filters,
                           MessageHandler, Updater)
 
-from tgbot.models import WEEK_CHOICES, Student
+from tgbot.models import WEEK_CHOICES, Student, ProjectManager
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -105,6 +108,13 @@ def choose_time(update: Update, context: CallbackContext):
     student.project_date = date.fromisoformat(text)
     student.save()
 
+    available_time = ProjectManager.objects.all().aggregate(
+        start_time=Min('projects_time_begin'),
+        end_time=Max('projects_time_end')
+    )
+    min_available_time = time.strftime(available_time['start_time'], '%H:%M')
+    max_available_time = time.strftime(available_time['end_time'], '%H:%M')
+
     if context.user_data['from_far_east']:
         update.message.reply_text(
             'В какое время тебе было бы удобно созваниваться с ПМом? (время для ДВ) '
@@ -125,21 +135,15 @@ def choose_time(update: Update, context: CallbackContext):
 
     else:
         update.message.reply_text(
-            'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
-            '(время указано по МСК)',
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text='18:00-18:30'),
-                        KeyboardButton(text='18:30-19:00'),
-                        KeyboardButton(text='19:00-19:30'),
-                        KeyboardButton(text='19:30-20:00'),
-                        KeyboardButton(text='20:00-20:30'),
-                        KeyboardButton(text='20:30-21:00'),
-                    ],
-                ],
-                resize_keyboard=True
-            ))
+            'Созвоны с ПМом и командой будут проходить каждый день,'
+            'кроме субботы и воскресенья.' 
+            'И будут длиться примерно 30 мин \n\n'
+            'В какое время тебе было бы удобно созваниваться с ПМом?'
+            f'В интервале с  {min_available_time} по {max_available_time} '
+            '(время указано по МСК) \n\n'
+            f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
+            reply_markup=ReplyKeyboardRemove()
+        )
 
         return 'write_time_to_db'
 
@@ -157,12 +161,11 @@ def write_time_to_db(update: Update, context: CallbackContext):
     student.save()
 
     update.message.reply_text(
-        'До встречи на проекте!',
+        'После распределения групп вам придет сообщение со временем соззвонов'
+        'и составом группы!',
         reply_markup=ReplyKeyboardRemove()
     )
     return ConversationHandler.END
-
-
 
 
 def cancel(update: Update, context: CallbackContext):
