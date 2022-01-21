@@ -21,8 +21,8 @@ def define_monday(num_of_week):
 
 
 WEEK_CHOICES = [
-    (3, define_monday(3)),
-    (4, define_monday(4))
+    (define_monday(3), define_monday(3)),
+    (define_monday(4), define_monday(4))
 ]
 
 
@@ -58,6 +58,12 @@ class Student(models.Model):
     preferred_time_end = models.TimeField(
         verbose_name='Предпочитаемый конец времени проектов',
         null=True,
+        blank=True
+    )
+    project_date = models.CharField(
+        max_length=50,
+        verbose_name='Дата начала проекта',
+        choices=WEEK_CHOICES,
         blank=True
     )
 

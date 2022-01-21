@@ -84,7 +84,7 @@ def choose_week(update: Update, context: CallbackContext):
                 resize_keyboard=True
             ),
         )
-        # add write week to db. week should be associated with user_id
+
         return 'choose_time'
     elif text == 'Я не с вами':
         update.message.reply_text(
@@ -97,12 +97,19 @@ def choose_week(update: Update, context: CallbackContext):
 
 
 def choose_time(update: Update, context: CallbackContext):
+    # add if text != 'Назад' to enable week change
+    text = update.message.text
+    user_id = update.effective_chat.id
+    student = Student.objects.get(telegram_id=user_id)
+    student.project_date = date.fromisoformat(text)
+    student.save()
+
     if context.user_data['from_far_east']:
         update.message.reply_text(
             'В какое время тебе было бы удобно созваниваться с ПМом? (время для ДВ) '
             '(время указано по МСК)',
             reply_markup=ReplyKeyboardRemove()
-            # chose time between 18-21
+            # chose time between 10-12
         )
     else:
         update.message.reply_text(
@@ -111,7 +118,6 @@ def choose_time(update: Update, context: CallbackContext):
             reply_markup=ReplyKeyboardRemove()
             # chose time between 18-21
         )
-
 
     # add write time to DB
 
