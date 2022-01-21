@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, date
+from datetime import datetime, date, time
 
 from django.core.management.base import BaseCommand
 from dotenv import load_dotenv
@@ -11,6 +11,7 @@ from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           MessageHandler, Updater)
 
 from tgbot.models import WEEK_CHOICES, Student
+
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
@@ -71,7 +72,7 @@ def choose_week(update: Update, context: CallbackContext):
     if text == 'Я в деле':
         update.message.reply_text(
             'Отлично, на какую неделю тебя записать?\n\n'
-            
+
             f'Можешь пойти на проект с {project_start[0][1]} или c {project_start[1][1]} \n\n'
             'Ты с нами?',
             reply_markup=ReplyKeyboardMarkup(
@@ -108,18 +109,60 @@ def choose_time(update: Update, context: CallbackContext):
         update.message.reply_text(
             'В какое время тебе было бы удобно созваниваться с ПМом? (время для ДВ) '
             '(время указано по МСК)',
-            reply_markup=ReplyKeyboardRemove()
-            # chose time between 10-12
-        )
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='10:00-10:30'),
+                        KeyboardButton(text='10:30-11:00'),
+                        KeyboardButton(text='11:00-11:30'),
+                        KeyboardButton(text='11:30-12:00'),
+                    ],
+                ],
+                resize_keyboard=True
+            ))
+
+        return 'write_time_to_db'
+
     else:
         update.message.reply_text(
             'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
             '(время указано по МСК)',
-            reply_markup=ReplyKeyboardRemove()
-            # chose time between 18-21
-        )
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=[
+                    [
+                        KeyboardButton(text='18:00-18:30'),
+                        KeyboardButton(text='18:30-19:00'),
+                        KeyboardButton(text='19:00-19:30'),
+                        KeyboardButton(text='19:30-20:00'),
+                        KeyboardButton(text='20:00-20:30'),
+                        KeyboardButton(text='20:30-21:00'),
+                    ],
+                ],
+                resize_keyboard=True
+            ))
 
-    # add write time to DB
+        return 'write_time_to_db'
+
+
+def write_time_to_db(update: Update, context: CallbackContext):
+
+    user_id = update.effective_chat.id
+    text = update.message.text
+    preferred_time_begin, preferred_time_end = text.split('-')
+    preferred_time_begin = time.fromisoformat(preferred_time_begin)
+    preferred_time_end = time.fromisoformat(preferred_time_end)
+    student = Student.objects.get(telegram_id=user_id)
+    student.preferred_time_end = preferred_time_end
+    student.preferred_time_begin = preferred_time_begin
+    student.save()
+
+    update.message.reply_text(
+        'До встречи на проекте!',
+        reply_markup=ReplyKeyboardRemove()
+    )
+    return ConversationHandler.END
+
+
 
 
 def cancel(update: Update, context: CallbackContext):
@@ -132,7 +175,6 @@ def cancel(update: Update, context: CallbackContext):
 
 
 class Command(BaseCommand):
-
     help = 'Бот для записи участников на проект и их распределения по группам'
 
     def handle(self, *args, **kwargs):
@@ -156,6 +198,13 @@ class Command(BaseCommand):
                         pass_user_data=True
                     )
                 ],
+                'write_time_to_db': [
+                    MessageHandler(
+                        Filters.text,
+                        write_time_to_db,
+                        pass_user_data=True
+                    )
+                ]
             },
             fallbacks=[
                 CommandHandler('cancel', cancel)],
