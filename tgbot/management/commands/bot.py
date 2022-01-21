@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, date, time
+from datetime import date, time, timedelta
 
 from django.core.management.base import BaseCommand
 from dotenv import load_dotenv
@@ -29,12 +29,12 @@ def build_menu(buttons, n_cols,
 
 def start_handler(update: Update, context: CallbackContext):
     user_id = update.effective_chat.id
-    start_dates = Project.objects.all().only('project_date').distinct()
+    start_date = Project.objects.all().only('project_date').first()
+    start_date = start_date.project_date
+    second_start_date = start_date + timedelta(days=7)
 
-    project_dates = [
-        str(project.project_date) for project in start_dates
-    ]
-    context.user_data['project_dates'] = project_dates
+    context.user_data['start_date'] = start_date
+    context.user_data['second_start_date'] = second_start_date
 
     student = Student.objects.get(telegram_id=user_id)
     first_name = update.effective_chat.first_name
@@ -55,7 +55,7 @@ def start_handler(update: Update, context: CallbackContext):
         update.message.reply_text(
             f'Привет, {first_name}!\n\n'
             'Готовимся к новому проекту\n'
-            f'Можешь пойти на проект с {project_dates[0]} или {project_dates[1]} \n\n'
+            f'Можешь пойти на проект с {start_date} или {second_start_date} \n\n'
             'Ты с нами?',
             reply_markup=ReplyKeyboardMarkup(
                 keyboard=build_menu(buttons, n_cols=2),
@@ -69,7 +69,10 @@ def choose_week(update: Update, context: CallbackContext):
     user_id = update.effective_chat.id
     text = update.message.text
 
-    project_dates = context.user_data['project_dates']
+    project_dates = [
+        str(context.user_data['start_date']),
+        str(context.user_data['second_start_date'])
+    ]
 
     if text == 'Я в деле':
         update.message.reply_text(
