@@ -1,6 +1,10 @@
+from collections import defaultdict
+
 from django.db import models
 from datetime import datetime, timedelta
 import calendar
+
+from django.db.models import Count
 
 SKILL_LEVEL_CHOICES = [
     ('novice', 'Новичок'),
@@ -9,21 +13,15 @@ SKILL_LEVEL_CHOICES = [
 ]
 
 
-def define_monday(num_of_week):
-    cal = calendar.Calendar(firstweekday=calendar.SUNDAY)
-    year = datetime.now().year
-    month = datetime.now().month
-    monthcal = cal.monthdatescalendar(year, month)
-    current_monday = [day for week in monthcal for day in week if
-                      day.weekday() == calendar.MONDAY and
-                      day.month == month][num_of_week - 1]
-    return str(current_monday)
-
-
 WEEK_CHOICES = [
-    (define_monday(3), define_monday(3)),
-    (define_monday(4), define_monday(4))
+    (1, 'Первая неделя'),
+    (2, 'Вторая неделя')
 ]
+
+
+def get_slot_lvl(slot):
+    student = slot[0]
+    return student.get_lvl()
 
 
 class Student(models.Model):
@@ -60,15 +58,21 @@ class Student(models.Model):
         null=True,
         blank=True
     )
-    project_date = models.CharField(
-        max_length=50,
-        verbose_name='Дата начала проекта',
+
+    preferred_week = models.IntegerField(
+        verbose_name='Предпочитаемая неделя проекта',
         choices=WEEK_CHOICES,
-        blank=True
+        default=1
     )
 
     def __str__(self):
         return self.full_name
+
+    def get_lvl(self):
+        if self.skill_level in ('novice', 'novice+'):
+            return 'novice'
+        else:
+            return 'junior'
 
     class Meta:
         verbose_name = 'Ученик'
@@ -132,9 +136,22 @@ class ProjectManager(models.Model):
 
 
 class Project(models.Model):
+    MAX_WEEK_NUM = 2
+
     name = models.CharField(
         max_length=100,
         verbose_name='Проект')
+
+    project_date = models.DateField(
+        verbose_name='Дата начала проекта',
+        blank=True
+    )
+
+    current_week = models.IntegerField(
+        verbose_name='Текущая неделя проекта',
+        choices=WEEK_CHOICES,
+        default=1
+    )
 
     def __str__(self):
         return self.name
@@ -142,6 +159,98 @@ class Project(models.Model):
     class Meta:
         verbose_name = 'Проект'
         verbose_name_plural = 'Проекты'
+
+    def make_teams(self):
+        current_week = self.current_week
+        pms = ProjectManager.objects.all()
+        students = list(Student.objects.filter(preferred_week=current_week))
+        for student in students:
+            student.grouped = False
+
+        print(students)
+        for pm in pms:
+            time_slots = pm.get_time_slots()
+            slots_with_students = defaultdict(list)
+            for time_slot in time_slots:
+                if len(slots_with_students[time_slot]) == 3:
+                    continue
+
+                for student in students:
+                    if student.grouped:
+                        continue
+
+                    if student.from_far_east:
+                        continue
+
+                    begin_time = student.preferred_time_begin
+                    end_time = student.preferred_time_end
+
+                    if (begin_time is None) or (end_time is None):
+                        # не зарегистрированных игнорируем
+                        continue
+
+                    if begin_time <= time_slot < end_time:
+                        slot = slots_with_students[time_slot]
+                        if slot:
+                            if not get_slot_lvl(slot) == student.get_lvl():
+                                continue
+                        slot.append(student)
+                        student.grouped = True
+
+            for time_slot, slot_students in slots_with_students.items():
+                if len(slot_students) == 0:
+                    continue
+                if 0 < len(slot_students) < 2:
+                    for student in students:
+                        if student.from_far_east and not student.grouped:
+                            if not get_slot_lvl(slot_students) == student.get_lvl():
+                                continue
+                            slot_students.append(student)
+                            student.grouped = True
+                            break
+                    else:
+                        # если не удалось наполнить дальневосточниками,
+                        # то пропускаем и ставим негруппированность
+                        for student in slot_students:
+                            student.grouped = False
+                        continue
+                team = ProjectTeam.objects.create(
+                    project=self,
+                    project_manager=pm,
+                    project_time=time_slot
+                )
+                team.students.set(slot_students)
+                team.save()
+
+        # если дальневосточники остались,
+        # то дополняем команды из двух человек
+        not_full_teams = list(ProjectTeam.objects.annotate(
+            students_num=Count('students')
+        ).filter(students_num=2))
+
+        for team in not_full_teams:
+            for student in students:
+                if student.from_far_east and not student.grouped:
+                    if student.get_lvl() != team.get_lvl():
+                        continue
+                    team.students.add(student)
+                    student.grouped = True
+                    break
+
+        # команды все еще состоящие из двух людей
+        # если есть, то предлагаем их нераспределенным
+        # не забудьте предложить только команды
+        # у которых team.get_lvl() == student.get_lvl()
+
+        still_not_full_teams = list(ProjectTeam.objects.annotate(
+            students_num=Count('students')
+        ).filter(students_num=2))
+
+        ungrouped_students = [
+            student for student in students if not student.grouped
+        ]
+
+        print(still_not_full_teams, ungrouped_students)
 
 
 class ProjectTeam(models.Model):
@@ -169,6 +278,9 @@ class ProjectTeam(models.Model):
 
     def __str__(self):
         return f'{self.id} команда проекта "{self.project.name}"'
+
+    def get_lvl(self):
+        return self.students.all()[0].get_lvl()
 
     class Meta:
         verbose_name = 'Команда проекта'

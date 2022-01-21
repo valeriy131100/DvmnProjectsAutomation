@@ -1,7 +1,6 @@
 import os
-from datetime import datetime, date, time, timedelta
-from pprint import pprint
 
+from datetime import datetime, date, time, timedelta
 
 from django.core.management.base import BaseCommand
 from django.db.models import Max, Min
@@ -15,13 +14,31 @@ from telegram.ext import (CallbackContext, CallbackQueryHandler,
 
 from tgbot.models import WEEK_CHOICES, Student, ProjectManager
 
+from tgbot.models import Student, Project, ProjectManager
+
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
 
+def build_menu(buttons, n_cols,
+               header_buttons=None,
+               footer_buttons=None):
+    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+    if header_buttons:
+        menu.insert(0, header_buttons)
+    if footer_buttons:
+        menu.append(footer_buttons)
+    return menu
+
+
 def start_handler(update: Update, context: CallbackContext):
     user_id = update.effective_chat.id
-    project_start = WEEK_CHOICES
+    start_date = Project.objects.all().only('project_date').first()
+    start_date = start_date.project_date
+    second_start_date = start_date + timedelta(days=7)
+
+    context.user_data['start_date'] = start_date
+    context.user_data['second_start_date'] = second_start_date
 
     student = Student.objects.get(telegram_id=user_id)
     first_name = update.effective_chat.first_name
@@ -37,54 +54,37 @@ def start_handler(update: Update, context: CallbackContext):
         return ConversationHandler.END
 
     else:
-        if str(datetime.now()) > str(project_start[1][1]):
-            update.message.reply_text(
-                f'Привет, {first_name}!\n\n'
-                f'К сожалению, все проекты уже стартовали.'
-                'Жди проект в следующем месяце\n'
-            )
-            # add remove third week if datetime.now > third week
-            return ConversationHandler.END
-
-        else:
-            context.user_data['from_far_east'] = student.from_far_east
-            update.message.reply_text(
-                f'Привет, {first_name}!\n\n'
-                'Готовимся к новому проекту\n'
-                f'Можешь пойти на проект с {project_start[0][1]} или {project_start[1][1]} \n\n'
-                'Ты с нами?',
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text='Я в деле'),
-                            KeyboardButton(text='Я не с вами')
-                        ],
-                    ],
-                    resize_keyboard=True
-                ),
-            )
-        return 'choose_week'
+        context.user_data['from_far_east'] = student.from_far_east
+        buttons = ['Я в деле', 'Я не с вами']
+        update.message.reply_text(
+            f'Привет, {first_name}!\n\n'
+            'Готовимся к новому проекту\n'
+            f'Можешь пойти на проект с {start_date} или {second_start_date} \n\n'
+            'Ты с нами?',
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=build_menu(buttons, n_cols=2),
+                resize_keyboard=True
+            ),
+        )
+    return 'choose_week'
 
 
 def choose_week(update: Update, context: CallbackContext):
     user_id = update.effective_chat.id
     text = update.message.text
 
-    project_start = WEEK_CHOICES
+    project_dates = [
+        str(context.user_data['start_date']),
+        str(context.user_data['second_start_date'])
+    ]
 
     if text == 'Я в деле':
         update.message.reply_text(
             'Отлично, на какую неделю тебя записать?\n\n'
 
-            f'Можешь пойти на проект с {project_start[0][1]} или c {project_start[1][1]} \n\n'
-            'Ты с нами?',
+            f'Можешь пойти на проект: \n\n',
             reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text=project_start[0][1]),
-                        KeyboardButton(text=project_start[1][1])
-                    ],
-                ],
+                keyboard=build_menu(project_dates, n_cols=2),
                 resize_keyboard=True
             ),
         )
@@ -101,6 +101,7 @@ def choose_week(update: Update, context: CallbackContext):
 
 
 def choose_time(update: Update, context: CallbackContext):
+    buttons = []
     # add if text != 'Назад' to enable week change
     text = update.message.text
     user_id = update.effective_chat.id
@@ -108,26 +109,24 @@ def choose_time(update: Update, context: CallbackContext):
     student.project_date = date.fromisoformat(text)
     student.save()
 
-    available_time = ProjectManager.objects.all().aggregate(
-        start_time=Min('projects_time_begin'),
-        end_time=Max('projects_time_end')
-    )
-    min_available_time = time.strftime(available_time['start_time'], '%H:%M')
-    max_available_time = time.strftime(available_time['end_time'], '%H:%M')
+    # available_time = ProjectManager.objects.all().aggregate(
+    #     start_time=Min('projects_time_begin'),
+    #     end_time=Max('projects_time_end')
+    # )
+    # min_available_time = time.strftime(available_time['start_time'], '%H:%M')
+    # max_available_time = time.strftime(available_time['end_time'], '%H:%M')
+
+    project_managers = ProjectManager.objects.all()
+    for manager in project_managers:
+        buttons += [str(meeting_time) for meeting_time in manager.get_time_slots()]
+    buttons = list(dict.fromkeys(buttons))
 
     if context.user_data['from_far_east']:
         update.message.reply_text(
             'В какое время тебе было бы удобно созваниваться с ПМом? (время для ДВ) '
             '(время указано по МСК)',
             reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text='10:00-10:30'),
-                        KeyboardButton(text='10:30-11:00'),
-                        KeyboardButton(text='11:00-11:30'),
-                        KeyboardButton(text='11:30-12:00'),
-                    ],
-                ],
+                keyboard=build_menu(buttons, n_cols=5),
                 resize_keyboard=True
             ))
 
@@ -135,15 +134,23 @@ def choose_time(update: Update, context: CallbackContext):
 
     else:
         update.message.reply_text(
-            'Созвоны с ПМом и командой будут проходить каждый день,'
-            'кроме субботы и воскресенья.' 
-            'И будут длиться примерно 30 мин \n\n'
-            'В какое время тебе было бы удобно созваниваться с ПМом?'
-            f'В интервале с  {min_available_time} по {max_available_time} '
-            '(время указано по МСК) \n\n'
-            f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
-            reply_markup=ReplyKeyboardRemove()
-        )
+
+        #     'Созвоны с ПМом и командой будут проходить каждый день,'
+        #     'кроме субботы и воскресенья.' 
+        #     'И будут длиться примерно 30 мин \n\n'
+        #     'В какое время тебе было бы удобно созваниваться с ПМом?'
+        #     f'В интервале с  {min_available_time} по {max_available_time} '
+        #     '(время указано по МСК) \n\n'
+        #     f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
+        #     reply_markup=ReplyKeyboardRemove()
+        # )
+
+            'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
+            '(время указано по МСК)',
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=build_menu(buttons, n_cols=5),
+                resize_keyboard=True
+            ))
 
         return 'write_time_to_db'
 
@@ -152,7 +159,7 @@ def write_time_to_db(update: Update, context: CallbackContext):
 
     user_id = update.effective_chat.id
     text = update.message.text
-    preferred_time_begin, preferred_time_end = text.split('-')
+    preferred_time_begin, preferred_time_end = text, text  # fix time + 00.30.00
     preferred_time_begin = time.fromisoformat(preferred_time_begin)
     preferred_time_end = time.fromisoformat(preferred_time_end)
     student = Student.objects.get(telegram_id=user_id)
@@ -161,7 +168,7 @@ def write_time_to_db(update: Update, context: CallbackContext):
     student.save()
 
     update.message.reply_text(
-        'После распределения групп вам придет сообщение со временем соззвонов'
+        'После распределения групп вам придет сообщение со временем созвонов'
         'и составом группы!',
         reply_markup=ReplyKeyboardRemove()
     )
@@ -209,6 +216,7 @@ class Command(BaseCommand):
                     )
                 ]
             },
+            per_user=True,
             fallbacks=[
                 CommandHandler('cancel', cancel)],
         )
