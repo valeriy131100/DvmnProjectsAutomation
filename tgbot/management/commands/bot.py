@@ -8,16 +8,15 @@ from telegram import (ForceReply, InlineKeyboardButton, InlineKeyboardMarkup,
 from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, ConversationHandler, Filters,
                           MessageHandler, Updater)
+
+from tgbot.models import WEEK_CHOICES
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
 
 def start_handler(update: Update, context: CallbackContext):
-    students = [479351324]
-    project_start = [
-        '15.02.2022',
-        '25.02.2022',
-    ]
+    students = [479351324, 181651413]
+    project_start = WEEK_CHOICES
 
     user_id = update.effective_chat.id
     first_name = update.effective_chat.first_name
@@ -34,7 +33,7 @@ def start_handler(update: Update, context: CallbackContext):
         update.message.reply_text(
             f'Привет, {first_name}!\n\n'
             'Готовимся к новому проекту\n'
-            f'Можешь пойти на проект с {project_start[0]} или {project_start[1]} \n\n'
+            f'Можешь пойти на проект с {project_start[0][1]} или {project_start[1][1]} \n\n'
             'Ты с нами?',
             reply_markup=ReplyKeyboardMarkup(
                 keyboard=[
@@ -53,16 +52,13 @@ def choose_week(update: Update, context: CallbackContext):
     user_id = update.effective_chat.id
     text = update.message.text
 
-    project_start = [
-        '15.02.2022',
-        '25.02.2022',
-    ]
+    project_start = WEEK_CHOICES
 
     if text == 'Я в деле':
         update.message.reply_text(
-            'Отлично на какую неделю тебя записать?\n\n'
+            'Отлично, на какую неделю тебя записать?\n\n'
             
-            f'Можешь пойти на проект с {project_start[0]} или {project_start[1]} \n\n'
+            f'Можешь пойти на проект с {project_start[0][1]} или c {project_start[1][1]} \n\n'
             'Ты с нами?',
             reply_markup=ReplyKeyboardMarkup(
                 keyboard=[
@@ -77,7 +73,7 @@ def choose_week(update: Update, context: CallbackContext):
         return 'choose_time'
     elif text == 'Я не с вами':
         update.message.reply_text(
-            'Вот это поворот! С тобой свяжется наше человек,'
+            'Вот это поворот! С тобой свяжется наш человек,'
             'чтобы выяснить обстоятельства.\n\n'
             'Если передумаешь, снова напиши /start',
             reply_markup=ReplyKeyboardRemove()

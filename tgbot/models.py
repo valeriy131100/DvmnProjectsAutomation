@@ -1,10 +1,29 @@
 from django.db import models
 from datetime import datetime, timedelta
+import calendar
 
 SKILL_LEVEL_CHOICES = [
     ('novice', 'Новичок'),
     ('novice+', 'Новичок+'),
     ('junior', 'Джун')
+]
+
+
+def define_monday(num_of_week):
+    cal = calendar.Calendar(firstweekday=calendar.SUNDAY)
+    year = datetime.now().year
+    month = datetime.now().month
+    monthcal = cal.monthdatescalendar(year, month)
+    current_monday = [day for week in monthcal for day in week if \
+                      day.weekday() == calendar.MONDAY and \
+                      day.month == month][num_of_week-1]
+
+    return str(current_monday)
+
+
+WEEK_CHOICES = [
+    (3, define_monday(3)),
+    (4, define_monday(4))
 ]
 
 
