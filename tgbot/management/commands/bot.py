@@ -10,15 +10,31 @@ from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, ConversationHandler, Filters,
                           MessageHandler, Updater)
 
-from tgbot.models import WEEK_CHOICES, Student
+from tgbot.models import Student, Project
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
 
+def build_menu(buttons, n_cols,
+               header_buttons=None,
+               footer_buttons=None):
+    menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+    if header_buttons:
+        menu.insert(0, header_buttons)
+    if footer_buttons:
+        menu.append(footer_buttons)
+    return menu
+
+
 def start_handler(update: Update, context: CallbackContext):
     user_id = update.effective_chat.id
-    project_start = WEEK_CHOICES
+    start_dates = Project.objects.all().only('project_date').distinct()
+
+    project_dates = [
+        str(project.project_date) for project in start_dates
+    ]
+    context.user_data['project_dates'] = project_dates
 
     student = Student.objects.get(telegram_id=user_id)
     first_name = update.effective_chat.first_name
@@ -34,54 +50,34 @@ def start_handler(update: Update, context: CallbackContext):
         return ConversationHandler.END
 
     else:
-        if str(datetime.now()) > str(project_start[1][1]):
-            update.message.reply_text(
-                f'Привет, {first_name}!\n\n'
-                f'К сожалению, все проекты уже стартовали.'
-                'Жди проект в следующем месяце\n'
-            )
-            # add remove third week if datetime.now > third week
-            return ConversationHandler.END
-
-        else:
-            context.user_data['from_far_east'] = student.from_far_east
-            update.message.reply_text(
-                f'Привет, {first_name}!\n\n'
-                'Готовимся к новому проекту\n'
-                f'Можешь пойти на проект с {project_start[0][1]} или {project_start[1][1]} \n\n'
-                'Ты с нами?',
-                reply_markup=ReplyKeyboardMarkup(
-                    keyboard=[
-                        [
-                            KeyboardButton(text='Я в деле'),
-                            KeyboardButton(text='Я не с вами')
-                        ],
-                    ],
-                    resize_keyboard=True
-                ),
-            )
-        return 'choose_week'
+        context.user_data['from_far_east'] = student.from_far_east
+        buttons = ['Я в деле', 'Я не с вами']
+        update.message.reply_text(
+            f'Привет, {first_name}!\n\n'
+            'Готовимся к новому проекту\n'
+            f'Можешь пойти на проект с {project_dates[0]} или {project_dates[1]} \n\n'
+            'Ты с нами?',
+            reply_markup=ReplyKeyboardMarkup(
+                keyboard=build_menu(buttons, n_cols=2),
+                resize_keyboard=True
+            ),
+        )
+    return 'choose_week'
 
 
 def choose_week(update: Update, context: CallbackContext):
     user_id = update.effective_chat.id
     text = update.message.text
 
-    project_start = WEEK_CHOICES
+    project_dates = context.user_data['project_dates']
 
     if text == 'Я в деле':
         update.message.reply_text(
             'Отлично, на какую неделю тебя записать?\n\n'
 
-            f'Можешь пойти на проект с {project_start[0][1]} или c {project_start[1][1]} \n\n'
-            'Ты с нами?',
+            f'Можешь пойти на проект: \n\n',
             reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text=project_start[0][1]),
-                        KeyboardButton(text=project_start[1][1])
-                    ],
-                ],
+                keyboard=build_menu(project_dates, n_cols=2),
                 resize_keyboard=True
             ),
         )
@@ -163,8 +159,6 @@ def write_time_to_db(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 
-
-
 def cancel(update: Update, context: CallbackContext):
     """Cancel and end the conversation."""
     update.message.reply_text(
@@ -206,6 +200,7 @@ class Command(BaseCommand):
                     )
                 ]
             },
+            per_user=True,
             fallbacks=[
                 CommandHandler('cancel', cancel)],
         )
