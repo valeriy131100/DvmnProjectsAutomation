@@ -43,6 +43,7 @@ def start_handler(update: Update, context: CallbackContext):
             return ConversationHandler.END
 
         else:
+            context.user_data['from_far_east'] = student.from_far_east
             update.message.reply_text(
                 f'Привет, {first_name}!\n\n'
                 'Готовимся к новому проекту\n'
@@ -76,13 +77,14 @@ def choose_week(update: Update, context: CallbackContext):
             reply_markup=ReplyKeyboardMarkup(
                 keyboard=[
                     [
-                        KeyboardButton(text=project_start[0]),
-                        KeyboardButton(text=project_start[1])
+                        KeyboardButton(text=project_start[0][1]),
+                        KeyboardButton(text=project_start[1][1])
                     ],
                 ],
                 resize_keyboard=True
             ),
         )
+        # add write week to db. week should be associated with user_id
         return 'choose_time'
     elif text == 'Я не с вами':
         update.message.reply_text(
@@ -95,7 +97,23 @@ def choose_week(update: Update, context: CallbackContext):
 
 
 def choose_time(update: Update, context: CallbackContext):
-    pass
+    if context.user_data['from_far_east']:
+        update.message.reply_text(
+            'В какое время тебе было бы удобно созваниваться с ПМом? (время для ДВ) '
+            '(время указано по МСК)',
+            reply_markup=ReplyKeyboardRemove()
+            # chose time between 18-21
+        )
+    else:
+        update.message.reply_text(
+            'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
+            '(время указано по МСК)',
+            reply_markup=ReplyKeyboardRemove()
+            # chose time between 18-21
+        )
+
+
+    # add write time to DB
 
 
 def cancel(update: Update, context: CallbackContext):
