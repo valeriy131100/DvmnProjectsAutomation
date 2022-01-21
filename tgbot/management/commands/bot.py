@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, date
 
 from django.core.management.base import BaseCommand
 from dotenv import load_dotenv
@@ -9,42 +10,54 @@ from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, ConversationHandler, Filters,
                           MessageHandler, Updater)
 
-from tgbot.models import WEEK_CHOICES
+from tgbot.models import WEEK_CHOICES, Student
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
 
 def start_handler(update: Update, context: CallbackContext):
-    students = [479351324, 181651413]
+    user_id = update.effective_chat.id
     project_start = WEEK_CHOICES
 
-    user_id = update.effective_chat.id
+    student = Student.objects.get(telegram_id=user_id)
     first_name = update.effective_chat.first_name
-    print(first_name, user_id)
 
-    if user_id not in students:
+    if not student:
         update.message.reply_text(
             f'Привет, {first_name}!\n\n'
-            'К сожалению не вижу тебя в списке студентов \n'
-            'Чтобы стать крутым разработчиком иди на https://dvmn.org 🎁\n\n'
-            'Как только станешь студентом еще раз напиши /start',
+            'К сожалению? не вижу тебя в списке студентов \n'
+            'Чтобы стать крутым разработчиком, иди на https://dvmn.org 🎁\n\n'
+            'Как только станешь студентом, еще раз напиши /start',
         )
+
+        return ConversationHandler.END
+
     else:
-        update.message.reply_text(
-            f'Привет, {first_name}!\n\n'
-            'Готовимся к новому проекту\n'
-            f'Можешь пойти на проект с {project_start[0][1]} или {project_start[1][1]} \n\n'
-            'Ты с нами?',
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text='Я в деле'),
-                        KeyboardButton(text='Я не с вами')
+        if str(datetime.now()) > str(project_start[1][1]):
+            update.message.reply_text(
+                f'Привет, {first_name}!\n\n'
+                f'К сожалению, все проекты уже стартовали.'
+                'Жди проект в следующем месяце\n'
+            )
+            # add remove third week if datetime.now > third week
+            return ConversationHandler.END
+
+        else:
+            update.message.reply_text(
+                f'Привет, {first_name}!\n\n'
+                'Готовимся к новому проекту\n'
+                f'Можешь пойти на проект с {project_start[0][1]} или {project_start[1][1]} \n\n'
+                'Ты с нами?',
+                reply_markup=ReplyKeyboardMarkup(
+                    keyboard=[
+                        [
+                            KeyboardButton(text='Я в деле'),
+                            KeyboardButton(text='Я не с вами')
+                        ],
                     ],
-                ],
-                resize_keyboard=True
-            ),
-        )
+                    resize_keyboard=True
+                ),
+            )
         return 'choose_week'
 
 

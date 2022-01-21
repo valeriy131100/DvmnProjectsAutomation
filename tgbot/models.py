@@ -14,10 +14,9 @@ def define_monday(num_of_week):
     year = datetime.now().year
     month = datetime.now().month
     monthcal = cal.monthdatescalendar(year, month)
-    current_monday = [day for week in monthcal for day in week if \
-                      day.weekday() == calendar.MONDAY and \
-                      day.month == month][num_of_week-1]
-
+    current_monday = [day for week in monthcal for day in week if
+                      day.weekday() == calendar.MONDAY and
+                      day.month == month][num_of_week - 1]
     return str(current_monday)
 
 
@@ -168,4 +167,3 @@ class ProjectTeam(models.Model):
     class Meta:
         verbose_name = 'Команда проекта'
         verbose_name_plural = 'Команды проектов'
-
