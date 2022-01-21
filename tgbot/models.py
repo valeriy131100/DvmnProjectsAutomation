@@ -119,10 +119,8 @@ class Project(models.Model):
         max_length=100,
         verbose_name='Проект')
 
-    project_date = models.CharField(
-        max_length=50,
+    project_date = models.DateField(
         verbose_name='Дата начала проекта',
-        choices=WEEK_CHOICES,
         blank=True
     )
 
