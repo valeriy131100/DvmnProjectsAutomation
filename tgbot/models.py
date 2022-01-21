@@ -9,20 +9,9 @@ SKILL_LEVEL_CHOICES = [
 ]
 
 
-def define_monday(num_of_week):
-    cal = calendar.Calendar(firstweekday=calendar.SUNDAY)
-    year = datetime.now().year
-    month = datetime.now().month
-    monthcal = cal.monthdatescalendar(year, month)
-    current_monday = [day for week in monthcal for day in week if
-                      day.weekday() == calendar.MONDAY and
-                      day.month == month][num_of_week - 1]
-    return str(current_monday)
-
-
 WEEK_CHOICES = [
-    (define_monday(3), define_monday(3)),
-    (define_monday(4), define_monday(4))
+    (3, 'Третья неделя месяца'),
+    (4, 'Четвертая неделя месяца')
 ]
 
 
@@ -58,12 +47,6 @@ class Student(models.Model):
     preferred_time_end = models.TimeField(
         verbose_name='Предпочитаемый конец времени проектов',
         null=True,
-        blank=True
-    )
-    project_date = models.CharField(
-        max_length=50,
-        verbose_name='Дата начала проекта',
-        choices=WEEK_CHOICES,
         blank=True
     )
 
@@ -135,6 +118,13 @@ class Project(models.Model):
     name = models.CharField(
         max_length=100,
         verbose_name='Проект')
+
+    project_date = models.CharField(
+        max_length=50,
+        verbose_name='Дата начала проекта',
+        choices=WEEK_CHOICES,
+        blank=True
+    )
 
     def __str__(self):
         return self.name
