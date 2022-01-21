@@ -10,8 +10,8 @@ SKILL_LEVEL_CHOICES = [
 
 
 WEEK_CHOICES = [
-    (3, 'Третья неделя месяца'),
-    (4, 'Четвертая неделя месяца')
+    (1, 'Первая неделя'),
+    (2, 'Вторая неделя')
 ]
 
 
@@ -48,6 +48,12 @@ class Student(models.Model):
         verbose_name='Предпочитаемый конец времени проектов',
         null=True,
         blank=True
+    )
+
+    preferred_week = models.IntegerField(
+        verbose_name='Предпочитаемая неделя проекта',
+        choices=WEEK_CHOICES,
+        default=1
     )
 
     def __str__(self):
@@ -122,6 +128,12 @@ class Project(models.Model):
     project_date = models.DateField(
         verbose_name='Дата начала проекта',
         blank=True
+    )
+
+    current_week = models.IntegerField(
+        verbose_name='Текущая неделя проекта',
+        choices=WEEK_CHOICES,
+        default=1
     )
 
     def __str__(self):
