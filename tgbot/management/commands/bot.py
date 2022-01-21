@@ -10,7 +10,7 @@ from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, ConversationHandler, Filters,
                           MessageHandler, Updater)
 
-from tgbot.models import Student, Project
+from tgbot.models import Student, Project, ProjectManager
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -97,26 +97,23 @@ def choose_week(update: Update, context: CallbackContext):
 
 
 def choose_time(update: Update, context: CallbackContext):
+    buttons = []
     # add if text != 'Назад' to enable week change
     text = update.message.text
     user_id = update.effective_chat.id
     student = Student.objects.get(telegram_id=user_id)
     student.project_date = date.fromisoformat(text)
     student.save()
-
+    project_managers = ProjectManager.objects.all()
+    for manager in project_managers:
+        buttons += [str(meeting_time) for meeting_time in manager.get_time_slots()]
+    buttons = list(dict.fromkeys(buttons))
     if context.user_data['from_far_east']:
         update.message.reply_text(
             'В какое время тебе было бы удобно созваниваться с ПМом? (время для ДВ) '
             '(время указано по МСК)',
             reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text='10:00-10:30'),
-                        KeyboardButton(text='10:30-11:00'),
-                        KeyboardButton(text='11:00-11:30'),
-                        KeyboardButton(text='11:30-12:00'),
-                    ],
-                ],
+                keyboard=build_menu(buttons, n_cols=5),
                 resize_keyboard=True
             ))
 
@@ -127,16 +124,7 @@ def choose_time(update: Update, context: CallbackContext):
             'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
             '(время указано по МСК)',
             reply_markup=ReplyKeyboardMarkup(
-                keyboard=[
-                    [
-                        KeyboardButton(text='18:00-18:30'),
-                        KeyboardButton(text='18:30-19:00'),
-                        KeyboardButton(text='19:00-19:30'),
-                        KeyboardButton(text='19:30-20:00'),
-                        KeyboardButton(text='20:00-20:30'),
-                        KeyboardButton(text='20:30-21:00'),
-                    ],
-                ],
+                keyboard=build_menu(buttons, n_cols=5),
                 resize_keyboard=True
             ))
 
@@ -147,7 +135,7 @@ def write_time_to_db(update: Update, context: CallbackContext):
 
     user_id = update.effective_chat.id
     text = update.message.text
-    preferred_time_begin, preferred_time_end = text.split('-')
+    preferred_time_begin, preferred_time_end = text, text  # fix time + 00.30.00
     preferred_time_begin = time.fromisoformat(preferred_time_begin)
     preferred_time_end = time.fromisoformat(preferred_time_end)
     student = Student.objects.get(telegram_id=user_id)
