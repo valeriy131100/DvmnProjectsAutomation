@@ -1,5 +1,5 @@
 import os
-
+import re
 from datetime import datetime, date, time, timedelta
 
 from django.core.management.base import BaseCommand
@@ -46,7 +46,7 @@ def start_handler(update: Update, context: CallbackContext):
     if not student:
         update.message.reply_text(
             f'Привет, {first_name}!\n\n'
-            'К сожалению? не вижу тебя в списке студентов \n'
+            'К сожалению, не вижу тебя в списке студентов \n'
             'Чтобы стать крутым разработчиком, иди на https://dvmn.org 🎁\n\n'
             'Как только станешь студентом, еще раз напиши /start',
         )
@@ -102,11 +102,13 @@ def choose_week(update: Update, context: CallbackContext):
 
 def choose_time(update: Update, context: CallbackContext):
     buttons = []
-    # add if text != 'Назад' to enable week change
     text = update.message.text
+    # if re.match(r'^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])?$', text):
+    print(text)
     user_id = update.effective_chat.id
     student = Student.objects.get(telegram_id=user_id)
     student.project_date = date.fromisoformat(text)
+    print(student.project_date)
     student.save()
 
     available_time = ProjectManager.objects.all().aggregate(
@@ -135,22 +137,22 @@ def choose_time(update: Update, context: CallbackContext):
     else:
         update.message.reply_text(
 
-            'Созвоны с ПМом и командой будут проходить каждый день,'
-            'кроме субботы и воскресенья.' 
-            'И будут длиться примерно 30 мин \n\n'
-            'В какое время тебе было бы удобно созваниваться с ПМом?'
+            'Созвоны с ПМом и командой будут проходить каждый день, '
+            'кроме субботы и воскресенья. '
+            'И будут длиться примерно 30 мин. \n\n'
+            'В какое время тебе было бы удобно созваниваться с ПМом? '
             f'В интервале с  {min_available_time} по {max_available_time} '
             '(время указано по МСК) \n\n'
             f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
             reply_markup=ReplyKeyboardRemove()
         )
 
-            # 'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
-            # '(время указано по МСК)',
-            # reply_markup=ReplyKeyboardMarkup(
-            #     keyboard=build_menu(buttons, n_cols=5),
-            #     resize_keyboard=True
-            # ))
+        # 'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
+        # '(время указано по МСК)',
+        # reply_markup=ReplyKeyboardMarkup(
+        #     keyboard=build_menu(buttons, n_cols=5),
+        #     resize_keyboard=True
+        # ))
 
         return 'write_time_to_db'
 
@@ -163,10 +165,16 @@ def send_not(update: Update, context: CallbackContext, user_id):
 
 
 def write_time_to_db(update: Update, context: CallbackContext):
-
     user_id = update.effective_chat.id
     text = update.message.text
-    preferred_time_begin, preferred_time_end = text, text  # fix time + 00.30.00
+    if "-" not in text or len(text) < 10 or "." in text:
+        update.message.reply_text(
+            'Введите удобное время созвонов в формате 18:00-00:00',
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return
+
+    preferred_time_begin, preferred_time_end = text.split('-')
     preferred_time_begin = time.fromisoformat(preferred_time_begin)
     preferred_time_end = time.fromisoformat(preferred_time_end)
     student = Student.objects.get(telegram_id=user_id)
@@ -175,7 +183,7 @@ def write_time_to_db(update: Update, context: CallbackContext):
     student.save()
 
     update.message.reply_text(
-        'После распределения групп вам придет сообщение со временем созвонов'
+        'После распределения групп вам придет сообщение со временем созвонов '
         'и составом группы!',
         reply_markup=ReplyKeyboardRemove()
     )
