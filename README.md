@@ -42,3 +42,34 @@ TELEGRAM_TOKEN='ваш_токен'
 ```shell
 python manage.py add_students
 ```
+
+### Добавить менеджеров из json-файла
+
+Для того, чтобы добавить всех менеджеров в базу данных, положите managers.json в папку PMs. Пример файла:
+```json
+[
+  {
+    "name": "Артем",
+    "telegram_id": "12345678",
+    "projects_time_begin": "20:00:00",
+    "projects_time_end": "23:00:00"
+  },
+  {
+    "name": "Екатерина",
+    "telegram_id": "989898989",
+    "projects_time_begin": "17:00:00",
+    "projects_time_end": "20:00:00"
+  },
+  {
+    "name": "Тим",
+    "telegram_id": "124435653",
+    "projects_time_begin": "18:00:00",
+    "projects_time_end": "21:00:00"
+  }
+]
+```
+Запустите скрипт:
+```shell
+python manage.py add_project_managers
+```
+
