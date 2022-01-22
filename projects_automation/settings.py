@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
+import telegram
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -128,3 +129,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+telegram_bot = telegram.Bot(TELEGRAM_TOKEN)

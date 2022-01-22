@@ -1,11 +1,10 @@
 import telegram
-from projects_automation.settings import TELEGRAM_TOKEN
+from projects_automation.settings import telegram_bot
 
 from collections import defaultdict
 
 from django.db import models
 from datetime import datetime, timedelta
-import calendar
 
 from django.db.models import Count
 
@@ -295,8 +294,6 @@ class ProjectTeam(models.Model):
         return self.students.all()[0].get_lvl()
 
     def send_notifications(self):
-        bot = telegram.Bot(TELEGRAM_TOKEN)
-
         project_name = self.project.name
 
         participants_links = '\n'.join([
@@ -319,7 +316,7 @@ class ProjectTeam(models.Model):
 
         for student in self.students.all():
             try:
-                bot.send_message(
+                telegram_bot.send_message(
                     chat_id=student.telegram_id,
                     text=students_text,
                     parse_mode='HTML'
@@ -333,7 +330,7 @@ class ProjectTeam(models.Model):
         )
 
         try:
-            bot.send_message(
+            telegram_bot.send_message(
                 chat_id=pm.telegram_id,
                 text=pm_text,
                 parse_mode='HTML'

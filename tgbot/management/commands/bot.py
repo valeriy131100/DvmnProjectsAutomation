@@ -1,14 +1,13 @@
 import re
 from datetime import date, time, timedelta
 
-import telegram
 from django.core.management.base import BaseCommand
 from django.db.models import Max, Min
 from telegram import (ReplyKeyboardRemove, Update, ReplyKeyboardMarkup)
 from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler, Filters,
                           MessageHandler, Updater)
 
-from projects_automation.settings import TELEGRAM_TOKEN
+from projects_automation.settings import TELEGRAM_TOKEN, telegram_bot
 from tgbot.models import Student, Project, ProjectManager
 
 
@@ -161,7 +160,6 @@ def choose_time(update: Update, context: CallbackContext):
 
 
 def send_project_registration(telegram_id, project_id):
-    bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
     keyboard = [
         [
@@ -169,7 +167,7 @@ def send_project_registration(telegram_id, project_id):
         ]
     ]
 
-    bot.send_message(
+    telegram_bot.send_message(
         chat_id=telegram_id,
         text='Привет! Снова пришла пора проектов. Нажми на кнопку ниже '
              'если ты готов начать регистрацию',
