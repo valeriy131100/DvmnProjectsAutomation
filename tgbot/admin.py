@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from tgbot.models import Student, ProjectManager, Project, ProjectTeam
-from tgbot.management.commands.bot import send_not, send_project_registration
+from tgbot.management.commands.bot import send_project_registration
 
 
 @admin.action(description='Создать команды на первую неделю')
@@ -14,16 +14,6 @@ def make_first_week_teams(modeladmin, request, queryset):
 def make_second_week_teams(modeladmin, request, queryset):
     for project in queryset:
         project.make_teams(week_num=2)
-
-
-@admin.action(description='Отправить оповещение')
-def send_notifications(modeladmin, request, queryset):
-    for team in queryset:
-        students = team.students.all()
-        for student in students:
-            text = student.full_name
-            telegram_id = student.telegram_id
-            send_not(telegram_id)
 
 
 @admin.action(description='Отправить оповещение')
@@ -44,11 +34,7 @@ class ProjectAdmin(admin.ModelAdmin):
     ]
 
 
-class ProjectTeamAdmin(admin.ModelAdmin):
-    actions = [send_notifications]
-
-
 admin.site.register(Student)
 admin.site.register(ProjectManager)
-admin.site.register(ProjectTeam, ProjectTeamAdmin)
+admin.site.register(ProjectTeam)
 admin.site.register(Project, ProjectAdmin)
