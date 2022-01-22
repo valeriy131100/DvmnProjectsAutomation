@@ -90,10 +90,12 @@ class ProjectManager(models.Model):
     )
 
     projects_time_begin = models.TimeField(
-        verbose_name='Начало времени проектов'
+        verbose_name='Начало времени проектов',
+        null=True
     )
     projects_time_end = models.TimeField(
-        verbose_name='Конец времени проектов'
+        verbose_name='Конец времени проектов',
+        null=True
     )
 
     def __str__(self):
