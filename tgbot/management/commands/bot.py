@@ -1,23 +1,15 @@
-import os
 import re
 from datetime import date, time, timedelta
 
 import telegram
 from django.core.management.base import BaseCommand
 from django.db.models import Max, Min
-from dotenv import load_dotenv
-from telegram import (ForceReply, InlineKeyboardButton, InlineKeyboardMarkup,
-                      ParseMode, ReplyKeyboardRemove, Update, chat,
-                      ReplyKeyboardMarkup, KeyboardButton)
-from telegram.ext import (CallbackContext, CallbackQueryHandler,
-                          CommandHandler, ConversationHandler, Filters,
+from telegram import (ReplyKeyboardRemove, Update, ReplyKeyboardMarkup)
+from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler, Filters,
                           MessageHandler, Updater)
 
+from projects_automation.settings import TELEGRAM_TOKEN
 from tgbot.models import Student, Project, ProjectManager
-from telegram.utils import helpers
-
-load_dotenv()
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 
 
 def build_menu(buttons, n_cols,
