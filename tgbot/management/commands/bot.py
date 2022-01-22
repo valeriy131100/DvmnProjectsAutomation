@@ -13,6 +13,7 @@ from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           MessageHandler, Updater)
 
 from tgbot.models import Student, Project, ProjectManager
+from telegram.utils import helpers
 
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
@@ -30,6 +31,9 @@ def build_menu(buttons, n_cols,
 
 
 def start_handler(update: Update, context: CallbackContext):
+
+    project_id = context.args if context.args else None
+
     user_id = update.effective_chat.id
     start_date = Project.objects.all().only('project_date').first()
     start_date = start_date.project_date
@@ -58,7 +62,8 @@ def start_handler(update: Update, context: CallbackContext):
             f'Привет, {first_name}!\n\n'
             'Готовимся к новому проекту\n'
             f'Можешь пойти на проект с {start_date} или {second_start_date} \n\n'
-            'Ты с нами?',
+            'Ты с нами?\n'
+            f'ID проекта, на которую ведется регистрация: {project_id}',
             reply_markup=ReplyKeyboardMarkup(
                 keyboard=build_menu(buttons, n_cols=2),
                 resize_keyboard=True
@@ -153,6 +158,15 @@ def send_not(user_id):
     )
 
 
+def send_deep_link(telegram_id, project_id):
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    deeplink = helpers.create_deep_linked_url(bot.username, project_id)
+    bot.send_message(
+        chat_id=telegram_id,
+        text=deeplink
+    )
+
+
 def write_time_to_db(update: Update, context: CallbackContext):
     user_id = update.effective_chat.id
     text = update.message.text
@@ -196,7 +210,8 @@ class Command(BaseCommand):
         dispatcher = updater.dispatcher
 
         conversation = ConversationHandler(
-            entry_points=[CommandHandler('start', start_handler)],
+            entry_points=[CommandHandler('start', start_handler),
+                          CommandHandler('start', start_handler)],
             states={
                 'choose_week': [
                     MessageHandler(
