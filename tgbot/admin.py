@@ -17,7 +17,7 @@ def send_notifications(modeladmin, request, queryset):
         for student in students:
             text = student.full_name
             id = student.telegram_id
-            send_not(update, context, id)
+            send_not(id)
 
 
 

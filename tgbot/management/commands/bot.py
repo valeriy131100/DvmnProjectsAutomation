@@ -1,6 +1,7 @@
 import os
 from datetime import date, time, timedelta
 
+import telegram
 from django.core.management.base import BaseCommand
 from django.db.models import Max, Min
 from dotenv import load_dotenv
@@ -144,9 +145,10 @@ def choose_time(update: Update, context: CallbackContext):
         return 'write_time_to_db'
 
 
-def send_not(update: Update, context: CallbackContext, user_id):
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
+def send_not(user_id):
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    bot.send_message(
+        chat_id=user_id,
         text=f'Проект будет!',
     )
 
