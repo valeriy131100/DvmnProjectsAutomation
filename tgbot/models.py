@@ -160,10 +160,9 @@ class Project(models.Model):
         verbose_name = 'Проект'
         verbose_name_plural = 'Проекты'
 
-    def make_teams(self):
-        current_week = self.current_week
+    def make_teams(self, week_num):
         pms = ProjectManager.objects.all()
-        students = list(Student.objects.filter(preferred_week=current_week))
+        students = list(Student.objects.filter(preferred_week=week_num))
         for student in students:
             student.grouped = False
 

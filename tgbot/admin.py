@@ -4,10 +4,16 @@ from tgbot.models import Student, ProjectManager, Project, ProjectTeam
 from tgbot.management.commands.bot import send_not, send_project_registration
 
 
-@admin.action(description='Создать команды')
-def make_teams_in_project(modeladmin, request, queryset):
+@admin.action(description='Создать команды на первую неделю')
+def make_first_week_teams(modeladmin, request, queryset):
     for project in queryset:
-        project.make_teams()
+        project.make_teams(week_num=1)
+
+
+@admin.action(description='Создать команды на вторую неделю')
+def make_second_week_teams(modeladmin, request, queryset):
+    for project in queryset:
+        project.make_teams(week_num=2)
 
 
 @admin.action(description='Отправить оповещение')
@@ -30,9 +36,12 @@ def send_project_offer(modeladmin, request, queryset):
             send_project_registration(telegram_id, project_id)
 
 
-
 class ProjectAdmin(admin.ModelAdmin):
-    actions = [make_teams_in_project, send_project_offer]
+    actions = [
+        make_first_week_teams,
+        make_second_week_teams,
+        send_project_offer
+    ]
 
 
 class ProjectTeamAdmin(admin.ModelAdmin):
