@@ -168,14 +168,6 @@ def choose_time(update: Update, context: CallbackContext):
         return 'write_time_to_db'
 
 
-def send_not(user_id):
-    bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    bot.send_message(
-        chat_id=user_id,
-        text=f'Проект будет!',
-    )
-
-
 def send_project_registration(telegram_id, project_id):
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
