@@ -1,3 +1,6 @@
+import telegram
+from projects_automation.settings import TELEGRAM_TOKEN
+
 from collections import defaultdict
 
 from django.db import models
@@ -166,7 +169,6 @@ class Project(models.Model):
         for student in students:
             student.grouped = False
 
-        print(students)
         for pm in pms:
             time_slots = pm.get_time_slots()
             slots_with_students = defaultdict(list)
@@ -253,7 +255,12 @@ class Project(models.Model):
             student for student in students if not student.grouped
         ]
 
-        print(still_not_full_teams, ungrouped_students)
+        teams = list(
+            ProjectTeam.objects.filter(project=self)
+        )
+
+        for team in teams:
+            team.send_notifications()
 
 
 class ProjectTeam(models.Model):
@@ -285,10 +292,52 @@ class ProjectTeam(models.Model):
     def get_lvl(self):
         return self.students.all()[0].get_lvl()
 
-    def notifications(self):
-        students = self.students
-        print(students)
+    def send_notifications(self):
+        bot = telegram.Bot(TELEGRAM_TOKEN)
 
+        project_name = self.project.name
+
+        participants_links = '\n'.join([
+            f'<a href="tg://user?id={student.telegram_id}">{student.full_name}</a>'
+            for student in self.students.all()
+        ])
+
+        pm = self.project_manager
+        pm_link = f'<a href="tg://user?id={pm.telegram_id}">{pm.full_name}</a>'
+
+        project_time = self.project_time.isoformat(timespec="minutes")
+
+        students_text = (
+            f'Тебя успешно распределили на проект!\n'
+            f'Собрание по проекту будет проходить в {project_time}\n\n'
+            f'Твой проект-менеджер: {pm_link}\n'
+            f'Твои коллеги: \n'
+            f'{participants_links}'
+        )
+
+        for student in self.students.all():
+            try:
+                bot.send_message(
+                    chat_id=student.telegram_id,
+                    text=students_text,
+                    parse_mode='HTML'
+                )
+            except telegram.error.BadRequest:
+                continue
+
+        pm_text = (
+            f'Предварительный состав команды на {project_time}:\n\n'
+            f'{participants_links}'
+        )
+
+        try:
+            bot.send_message(
+                chat_id=pm.telegram_id,
+                text=pm_text,
+                parse_mode='HTML'
+            )
+        except telegram.error.BadRequest:
+            pass
 
     class Meta:
         verbose_name = 'Команда проекта'
