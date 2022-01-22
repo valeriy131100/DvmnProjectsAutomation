@@ -1,6 +1,5 @@
 import os
-import re
-from datetime import datetime, date, time, timedelta
+from datetime import date, time, timedelta
 
 from django.core.management.base import BaseCommand
 from django.db.models import Max, Min
@@ -11,8 +10,6 @@ from telegram import (ForceReply, InlineKeyboardButton, InlineKeyboardMarkup,
 from telegram.ext import (CallbackContext, CallbackQueryHandler,
                           CommandHandler, ConversationHandler, Filters,
                           MessageHandler, Updater)
-
-from tgbot.models import WEEK_CHOICES, Student, ProjectManager
 
 from tgbot.models import Student, Project, ProjectManager
 
@@ -103,12 +100,9 @@ def choose_week(update: Update, context: CallbackContext):
 def choose_time(update: Update, context: CallbackContext):
     buttons = []
     text = update.message.text
-    # if re.match(r'^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])?$', text):
-    print(text)
     user_id = update.effective_chat.id
     student = Student.objects.get(telegram_id=user_id)
     student.project_date = date.fromisoformat(text)
-    print(student.project_date)
     student.save()
 
     available_time = ProjectManager.objects.all().aggregate(
@@ -146,13 +140,6 @@ def choose_time(update: Update, context: CallbackContext):
             f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
             reply_markup=ReplyKeyboardRemove()
         )
-
-        # 'В какое время тебе было бы удобно созваниваться с ПМом? (время для ЦРРФ)'
-        # '(время указано по МСК)',
-        # reply_markup=ReplyKeyboardMarkup(
-        #     keyboard=build_menu(buttons, n_cols=5),
-        #     resize_keyboard=True
-        # ))
 
         return 'write_time_to_db'
 
