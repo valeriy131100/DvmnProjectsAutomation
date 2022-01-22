@@ -224,9 +224,11 @@ class Project(models.Model):
 
         # если дальневосточники остались,
         # то дополняем команды из двух человек
-        not_full_teams = list(ProjectTeam.objects.annotate(
-            students_num=Count('students')
-        ).filter(students_num=2))
+        not_full_teams = list(
+            ProjectTeam.objects.filter(project=self)
+                               .annotate(students_num=Count('students'))
+                               .filter(students_num=2)
+        )
 
         for team in not_full_teams:
             for student in students:
@@ -242,9 +244,11 @@ class Project(models.Model):
         # не забудьте предложить только команды
         # у которых team.get_lvl() == student.get_lvl()
 
-        still_not_full_teams = list(ProjectTeam.objects.annotate(
-            students_num=Count('students')
-        ).filter(students_num=2))
+        still_not_full_teams = list(
+            ProjectTeam.objects.filter(project=self)
+                               .annotate(students_num=Count('students'))
+                               .filter(students_num=2)
+        )
 
         ungrouped_students = [
             student for student in students if not student.grouped
