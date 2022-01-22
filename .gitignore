@@ -131,4 +131,5 @@ dmypy.json
 
 # JSONS
 Students/
+PMs/
 test.py
