@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from tgbot.models import Student, ProjectManager, Project, ProjectTeam
-from tgbot.management.commands.bot import send_not, send_deep_link
+from tgbot.management.commands.bot import send_not, send_project_registration
 
 
 @admin.action(description='Создать команды')
@@ -27,7 +27,7 @@ def send_project_offer(modeladmin, request, queryset):
         project_id = str(project.id)
         for student in students:
             telegram_id = student.telegram_id
-            send_deep_link(telegram_id, project_id)
+            send_project_registration(telegram_id, project_id)
 
 
 

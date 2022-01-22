@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import date, time, timedelta
 
 import telegram
@@ -54,21 +55,39 @@ def start_handler(update: Update, context: CallbackContext):
         )
 
         return ConversationHandler.END
-
     else:
-        context.user_data['from_far_east'] = student.from_far_east
-        buttons = ['Я в деле', 'Я не с вами']
         update.message.reply_text(
-            f'Привет, {first_name}!\n\n'
-            'Готовимся к новому проекту\n'
-            f'Можешь пойти на проект с {start_date} или {second_start_date} \n\n'
-            'Ты с нами?\n'
-            f'ID проекта, на которую ведется регистрация: {project_id}',
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=build_menu(buttons, n_cols=2),
-                resize_keyboard=True
-            ),
+            'Привет, пока еще рано, мы напишем тебе, когда нужно будет '
+            'регистрироваться!'
         )
+
+
+def project_start_handler(update: Update, context: CallbackContext):
+    text = update.message.text
+    s_project_id = re.match(r'^Регистрация на проект (\d+)$', text).groups()[0]
+    project_id = int(s_project_id)
+
+    user_id = update.effective_chat.id
+    start_date = Project.objects.get(id=project_id)
+    start_date = start_date.project_date
+    second_start_date = start_date + timedelta(days=7)
+
+    context.user_data['start_date'] = start_date
+    context.user_data['second_start_date'] = second_start_date
+
+    student = Student.objects.get(telegram_id=user_id)
+    first_name = update.effective_chat.first_name
+
+    context.user_data['from_far_east'] = student.from_far_east
+    buttons = ['Я в деле', 'Я не с вами']
+    update.message.reply_text(
+        f'Можешь пойти на проект с {start_date} или {second_start_date} \n\n'
+        'Ты с нами?\n',
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=build_menu(buttons, n_cols=2),
+            resize_keyboard=True
+        ),
+    )
     return 'choose_week'
 
 
@@ -95,9 +114,8 @@ def choose_week(update: Update, context: CallbackContext):
         return 'choose_time'
     elif text == 'Я не с вами':
         update.message.reply_text(
-            'Вот это поворот! С тобой свяжется наш человек,'
-            'чтобы выяснить обстоятельства.\n\n'
-            'Если передумаешь, снова напиши /start',
+            'Вот это поворот! Напиши, пожалуйста, '
+            'куратору и уточни в чем дело',
             reply_markup=ReplyKeyboardRemove()
         )
         return ConversationHandler.END
@@ -158,12 +176,20 @@ def send_not(user_id):
     )
 
 
-def send_deep_link(telegram_id, project_id):
+def send_project_registration(telegram_id, project_id):
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    deeplink = helpers.create_deep_linked_url(bot.username, project_id)
+
+    keyboard = [
+        [
+            f'Регистрация на проект {project_id}'
+        ]
+    ]
+
     bot.send_message(
         chat_id=telegram_id,
-        text=deeplink
+        text='Привет! Снова пришла пора проектов. Нажми на кнопку ниже '
+             'если ты готов начать регистрацию',
+        reply_markup=ReplyKeyboardMarkup(keyboard)
     )
 
 
@@ -210,8 +236,12 @@ class Command(BaseCommand):
         dispatcher = updater.dispatcher
 
         conversation = ConversationHandler(
-            entry_points=[CommandHandler('start', start_handler),
-                          CommandHandler('start', start_handler)],
+            entry_points=[
+                MessageHandler(
+                    Filters.regex(r'^Регистрация на проект \d+$'),
+                    project_start_handler,
+                    pass_user_data=True
+                )],
             states={
                 'choose_week': [
                     MessageHandler(
@@ -241,6 +271,7 @@ class Command(BaseCommand):
         )
 
         dispatcher.add_handler(conversation)
+        dispatcher.add_handler(CommandHandler('start', start_handler))
         # dispatcher.add_handler(constructor_handler)
         # dispatcher.add_handler(
         #     MessageHandler(filters=Filters.text, callback=show_orders))
