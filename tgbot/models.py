@@ -26,6 +26,14 @@ def get_slot_lvl(slot):
     return student.get_lvl()
 
 
+def check_slot_compatibility(student, slot):
+    if slot:
+        if not get_slot_lvl(slot) == student.get_lvl():
+            return False
+
+    return True
+
+
 class Student(models.Model):
     telegram_id = models.IntegerField(
         verbose_name='ID в telegram',
@@ -206,19 +214,19 @@ class Project(models.Model):
 
                     if begin_time <= time_slot < end_time:
                         slot = slots_with_students[time_slot]
-                        if slot:
-                            if not get_slot_lvl(slot) == student.get_lvl():
-                                continue
+                        if not check_slot_compatibility(student, slot):
+                            continue
                         slot.append(student)
                         student.grouped = True
 
+            # наполняем дальневосточниками группы, где 1 человек
             for time_slot, slot_students in slots_with_students.items():
                 if len(slot_students) == 0:
                     continue
                 if 0 < len(slot_students) < 2:
                     for student in students:
                         if student.from_far_east and not student.grouped:
-                            if not get_slot_lvl(slot_students) == student.get_lvl():
+                            if not check_slot_compatibility(student, slot_students):
                                 continue
                             slot_students.append(student)
                             student.grouped = True
@@ -238,7 +246,7 @@ class Project(models.Model):
 
                 for student in students:
                     if student.from_far_east and not student.grouped:
-                        if not student.get_lvl() == get_slot_lvl(slot_students):
+                        if not check_slot_compatibility(student, slot_students):
                             continue
                         slot_students.append(student)
                         student.grouped = True
