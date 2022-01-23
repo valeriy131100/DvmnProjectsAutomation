@@ -24,13 +24,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-t3uf18+c_4n)*-3c=yngh15rfd66zj8%(%i&09shc^$26x8&kk'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -128,3 +121,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1')
+DEBUG = os.getenv('DEBUG', default=True)
