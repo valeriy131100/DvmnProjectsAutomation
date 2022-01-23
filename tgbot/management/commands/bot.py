@@ -229,6 +229,7 @@ def retry_start_handler(update: Update, context: CallbackContext):
         [f'Записаться в команду {team.id} '
          f'(собрания в {team.project_time.isoformat(timespec="minutes")})']
         for team in still_not_full_teams
+        if team.get_lvl() == student.get_lvl()
     ]
 
     if student.preferred_week == 1:
