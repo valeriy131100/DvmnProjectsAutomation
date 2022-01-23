@@ -309,10 +309,19 @@ def retry_add_team_handler(update: Update, context: CallbackContext):
             f'{participants_links}'
         )
 
+        buttons = [
+            [
+                f'Выйти из проекта {project_id}'
+            ]
+        ]
+
         update.message.reply_text(
             text,
             parse_mode='HTML',
-            reply_markup=ReplyKeyboardRemove()
+            reply_markup=ReplyKeyboardMarkup(
+                buttons,
+                resize_keyboard=True
+            )
         )
 
         pm = team.project_manager
@@ -344,6 +353,26 @@ def retry_change_week_handler(update: Update, context: CallbackContext):
     )
 
     return ConversationHandler.END
+
+
+def leave_from_project_handler(update: Update, context: CallbackContext):
+    text = update.message.text
+
+    match = re.match(r'^Выйти из проекта (\d+)$', text)
+    project_id = int(match.groups()[0])
+    student = Student.objects.get(telegram_id=update.message.from_user.id)
+
+    team = ProjectTeam.objects.get(
+        students=student,
+        project__pk=project_id
+    )
+
+    team.students.remove(student)
+    team.save()
+
+    update.message.reply_text(
+        'Что ж, в таком случае до встречи!'
+    )
 
 
 def cancel(update: Update, context: CallbackContext):
@@ -426,6 +455,12 @@ class Command(BaseCommand):
 
         dispatcher.add_handler(reg_conversation)
         dispatcher.add_handler(retry_conversation)
+        dispatcher.add_handler(
+            MessageHandler(
+                Filters.regex(r'^Выйти из проекта \d+$'),
+                leave_from_project_handler
+            )
+        )
         dispatcher.add_handler(CommandHandler('start', start_handler))
         # dispatcher.add_handler(constructor_handler)
         # dispatcher.add_handler(

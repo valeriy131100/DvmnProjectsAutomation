@@ -371,12 +371,22 @@ class ProjectTeam(models.Model):
             f'{participants_links}'
         )
 
+        students_buttons = [
+            [
+                f'Выйти из проекта {self.project.id}'
+            ]
+        ]
+
         for student in self.students.all():
             try:
                 telegram_bot.send_message(
                     chat_id=student.telegram_id,
                     text=students_text,
-                    parse_mode='HTML'
+                    parse_mode='HTML',
+                    reply_markup=telegram.ReplyKeyboardMarkup(
+                        students_buttons,
+                        resize_keyboard=True
+                    )
                 )
             except telegram.error.BadRequest:
                 continue
