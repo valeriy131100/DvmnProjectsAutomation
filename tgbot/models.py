@@ -104,6 +104,32 @@ class Student(models.Model):
         else:
             return 'junior'
 
+    def send_cant_group_message(self, project_id, start_text):
+        retry_message = (f'{start_text}\n'
+                         f'Нажми на кнопку ниже, чтобы узнать варианты '
+                         f'решения проблемы')
+
+        retry_buttons = [
+            [
+                f'Посмотреть варианты в проекте {project_id}'
+            ]
+        ]
+        try:
+            telegram_bot.send_message(
+                chat_id=self.telegram_id,
+                text=retry_message,
+                reply_markup=telegram.ReplyKeyboardMarkup(
+                    retry_buttons,
+                    resize_keyboard=True
+                )
+            )
+        except telegram.error.BadRequest:
+            pass
+
+    def get_telegram_mention(self):
+        return (f'<a href="tg://user?id={self.telegram_id}">'
+                f'{self.full_name}</a>')
+
     class Meta:
         verbose_name = 'Ученик'
         verbose_name_plural = 'Ученики'
@@ -127,6 +153,10 @@ class ProjectManager(models.Model):
         verbose_name='Конец времени проектов',
         null=True
     )
+
+    def get_telegram_mention(self):
+        return (f'<a href="tg://user?id={self.telegram_id}">'
+                f'{self.full_name}</a>')
 
     def __str__(self):
         return self.full_name
@@ -296,29 +326,12 @@ class Project(models.Model):
         for team in teams:
             team.send_notifications()
 
-        retry_message = ('Привет, к сожалению тебя не '
-                         'удалось распределить в команды.\n'
-                         'Нажми на кнопку ниже, чтобы узнать варианты '
-                         'решения проблемы')
-
-        retry_buttons = [
-            [
-                f'Посмотреть варианты в проекте {self.id}'
-            ]
-        ]
-
         for student in ungrouped_students:
-            try:
-                telegram_bot.send_message(
-                    chat_id=student.telegram_id,
-                    text=retry_message,
-                    reply_markup=telegram.ReplyKeyboardMarkup(
-                        retry_buttons,
-                        resize_keyboard=True
-                    )
-                )
-            except telegram.error.BadRequest:
-                pass
+            student.send_cant_group_message(
+                self.id,
+                start_text='Привет, к сожалению тебя не '
+                           'удалось распределить в команды.'
+            )
 
 
 class ProjectTeam(models.Model):
@@ -354,12 +367,12 @@ class ProjectTeam(models.Model):
         project_name = self.project.name
 
         participants_links = '\n'.join([
-            f'<a href="tg://user?id={student.telegram_id}">{student.full_name}</a>'
+            student.get_telegram_mention()
             for student in self.students.all()
         ])
 
         pm = self.project_manager
-        pm_link = f'<a href="tg://user?id={pm.telegram_id}">{pm.full_name}</a>'
+        pm_link = pm.get_telegram_mention()
 
         project_time = self.project_time.isoformat(timespec="minutes")
 

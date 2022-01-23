@@ -374,6 +374,34 @@ def leave_from_project_handler(update: Update, context: CallbackContext):
         'Что ж, в таком случае до встречи!'
     )
 
+    pm = team.project_manager
+    team_time = team.project_time.isoformat(timespec='minutes')
+
+    if team.students.count() < 2:
+        students = list(team.students.all())
+        team.delete()
+
+        for student in students:
+            student.send_cant_group_message(
+                project_id=project_id,
+                start_text='Привет, к сожалению, твоя группа распалась.'
+            )
+
+        try:
+            telegram_bot.send_message(
+                chat_id=pm.telegram_id,
+                text=f'Группа на {team_time} распалась'
+            )
+        except telegram.error.BadRequest:
+            pass
+    else:
+        telegram_bot.send_message(
+            chat_id=pm.telegram_id,
+            text=f'Из группы на {team_time} '
+                 f'вышел {student.get_telegram_mention()}',
+            parse_mode='HTML'
+        )
+
 
 def cancel(update: Update, context: CallbackContext):
     """Cancel and end the conversation."""
