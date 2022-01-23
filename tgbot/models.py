@@ -221,8 +221,6 @@ class Project(models.Model):
 
             # наполняем дальневосточниками группы, где 1 человек
             for time_slot, slot_students in slots_with_students.items():
-                if len(slot_students) == 0:
-                    continue
                 if 0 < len(slot_students) < 2:
                     for student in students:
                         if student.from_far_east and not student.grouped:
@@ -242,7 +240,7 @@ class Project(models.Model):
             # то дополняем команды из двух человек
             for time_slot, slot_students in slots_with_students.items():
                 if len(slot_students) != 2:
-                    pass
+                    continue
 
                 for student in students:
                     if student.from_far_east and not student.grouped:
