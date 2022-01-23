@@ -239,31 +239,31 @@ class Project(models.Model):
                         for student in slot_students:
                             student.grouped = False
                         continue
-                team = ProjectTeam.objects.create(
-                    project=self,
-                    project_manager=pm,
-                    project_time=time_slot
-                )
-                team.students.set(slot_students)
-                team.save()
 
-        # если дальневосточники остались,
-        # то дополняем команды из двух человек
-        not_full_teams = list(
-            ProjectTeam.objects.filter(project=self)
-                               .annotate(students_num=Count('students'))
-                               .filter(students_num=2)
-        )
+            # если дальневосточники остались,
+            # то дополняем команды из двух человек
+            for time_slot, slot_students in slots_with_students.items():
+                if len(slot_students) != 2:
+                    pass
 
-        for team in not_full_teams:
-            for student in students:
-                if student.from_far_east and not student.grouped:
-                    if student.get_lvl() != team.get_lvl():
-                        continue
-                    team.students.add(student)
+                for student in students:
+                    if student.from_far_east and not student.grouped:
+                        if not student.get_lvl() == get_slot_lvl(slot_students):
+                            continue
+                        slot_students.append(student)
+                        student.grouped = True
+                        break
+
+            # создаем команды
+            for time_slot, slot_students in slots_with_students.items():
+                if len(slot_students) >= 2:
+                    team = ProjectTeam.objects.create(
+                        project=self,
+                        project_manager=pm,
+                        project_time=time_slot
+                    )
+                    team.students.set(slot_students)
                     team.save()
-                    student.grouped = True
-                    break
 
         # команды все еще состоящие из двух людей
         # если есть, то предлагаем их нераспределенным
