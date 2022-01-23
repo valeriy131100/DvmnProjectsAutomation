@@ -238,6 +238,7 @@ class Project(models.Model):
                     if student.get_lvl() != team.get_lvl():
                         continue
                     team.students.add(student)
+                    team.save()
                     student.grouped = True
                     break
 
@@ -262,6 +263,30 @@ class Project(models.Model):
 
         for team in teams:
             team.send_notifications()
+
+        retry_message = ('Привет, к сожалению тебя не '
+                         'удалось распределить в команды.\n'
+                         'Нажми на кнопку ниже, чтобы узнать варианты '
+                         'решения проблемы')
+
+        retry_buttons = [
+            [
+                f'Посмотреть варианты в проекте {self.id}'
+            ]
+        ]
+
+        for student in ungrouped_students:
+            try:
+                telegram_bot.send_message(
+                    chat_id=student.telegram_id,
+                    text=retry_message,
+                    reply_markup=telegram.ReplyKeyboardMarkup(
+                        retry_buttons,
+                        resize_keyboard=True
+                    )
+                )
+            except telegram.error.BadRequest:
+                pass
 
 
 class ProjectTeam(models.Model):

@@ -8,7 +8,8 @@ from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler, 
                           MessageHandler, Updater)
 
 from projects_automation.settings import TELEGRAM_TOKEN, telegram_bot
-from tgbot.models import Student, Project, ProjectManager
+from tgbot.models import Student, Project, ProjectManager, ProjectTeam
+from django.db.models import Count
 
 
 def build_menu(buttons, n_cols,
@@ -201,6 +202,139 @@ def write_time_to_db(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 
+def retry_start_handler(update: Update, context: CallbackContext):
+    text = update.message.text
+
+    match = re.match(r'^Посмотреть варианты в проекте (\d+)$', text)
+    if match:
+        s_project_id = match.groups()[0]
+        project_id = int(s_project_id)
+        context.user_data['project_id'] = project_id
+    else:
+        project_id = context.user_data.get('project_id', None)
+
+    still_not_full_teams = list(
+        ProjectTeam.objects.filter(project__pk=project_id)
+                           .annotate(students_num=Count('students'))
+                           .filter(students_num=2)
+    )
+
+    student = Student.objects.get(telegram_id=update.message.from_user.id)
+
+    buttons = [
+        [f'Записаться в команду {team.id} '
+         f'(собрания в {team.project_time.isoformat(timespec="minutes")})']
+        for team in still_not_full_teams
+    ]
+
+    if student.preferred_week == 1:
+        buttons.append(
+            ['Попробовать попасть в команду на следующей неделе']
+        )
+
+    if len(buttons) > 0:
+        update.message.reply_text(
+            'Доступны следующие варианты',
+            reply_markup=ReplyKeyboardMarkup(
+                buttons,
+                resize_keyboard=True
+            )
+        )
+        return 'retry_answer'
+    else:
+        update.message.reply_text(
+            'Кажется у нас совершенно нет вариантов, '
+            'чтобы ты попал на проект. '
+            'Спроси у своего куратора, что тебе стоит делать',
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return ConversationHandler.END
+
+
+def retry_add_team_handler(update: Update, context: CallbackContext):
+    student = Student.objects.get(telegram_id=update.message.from_user.id)
+
+    text = update.message.text
+
+    team_id = re.match(
+        r'^Записаться в команду (\d+)',
+        text
+    ).groups()[0]
+    team = ProjectTeam.objects.get(pk=int(team_id))
+
+    if team.students.count() == 3:
+        update.message.reply_text(
+            'Извините, но с момента прошлого сообщения кто-то уже успел '
+            'попасть в эту команду.'
+        )
+        return retry_start_handler(update, context)
+    else:
+        team.students.add(student)
+        team.save()
+
+        project_id = context.user_data['project_id']
+        project = Project.objects.get(pk=project_id)
+
+        project_name = project.name
+
+        participants_links = '\n'.join([
+            f'<a href="tg://user?id={team_student.telegram_id}">'
+            f'{team_student.full_name}</a>'
+            for team_student in team.students.all()
+        ])
+
+        student_link = (
+            f'<a href="tg://user?id={student.telegram_id}">'
+            f'{student.full_name}</a>'
+        )
+
+        pm = team.project_manager
+        pm_link = f'<a href="tg://user?id={pm.telegram_id}">{pm.full_name}</a>'
+
+        project_time = team.project_time.isoformat(timespec="minutes")
+
+        text = (
+            f'Успешно!\n'
+            f'Собрание по проекту будет проходить в {project_time}\n\n'
+            f'Твой проект-менеджер: {pm_link}\n'
+            f'Твои коллеги: \n'
+            f'{participants_links}'
+        )
+
+        update.message.reply_text(
+            text,
+            parse_mode='HTML',
+            reply_markup=ReplyKeyboardRemove()
+        )
+
+        pm = team.project_manager
+
+        pm_text = (
+            f'В команду на {project_time} добавился ученик {student_link}'
+        )
+
+        telegram_bot.send_message(
+            chat_id=pm.telegram_id,
+            text=pm_text,
+            parse_mode='HTML'
+        )
+
+        return ConversationHandler.END
+
+
+def retry_change_week_handler(update: Update, context: CallbackContext):
+    student = Student.objects.get(telegram_id=update.message.from_user.id)
+    student.preferred_week = 2
+    student.save()
+
+    update.message.reply_text(
+        'До встречи на следующей неделе!',
+        reply_markup=ReplyKeyboardRemove()
+    )
+
+    return ConversationHandler.END
+
+
 def cancel(update: Update, context: CallbackContext):
     """Cancel and end the conversation."""
     update.message.reply_text(
@@ -217,7 +351,7 @@ class Command(BaseCommand):
         updater = Updater(TELEGRAM_TOKEN, use_context=True)
         dispatcher = updater.dispatcher
 
-        conversation = ConversationHandler(
+        reg_conversation = ConversationHandler(
             entry_points=[
                 MessageHandler(
                     Filters.regex(r'^Регистрация на проект \d+$'),
@@ -252,7 +386,35 @@ class Command(BaseCommand):
                 CommandHandler('cancel', cancel)],
         )
 
-        dispatcher.add_handler(conversation)
+        retry_conversation = ConversationHandler(
+            entry_points=[
+                MessageHandler(
+                    Filters.regex(r'^Посмотреть варианты в проекте \d+$'),
+                    retry_start_handler,
+                    pass_user_data=True
+                )],
+            states={
+                'retry_answer': [
+                    MessageHandler(
+                        Filters.regex(r'^Записаться в команду \d+'
+                                      r' \(собрания в \d{2}:\d{2}\)$'),
+                        retry_add_team_handler,
+                        pass_user_data=True
+                    ),
+                    MessageHandler(
+                        Filters.regex(r'^Попробовать попасть в'
+                                      r' команду на следующей неделе$'),
+                        retry_change_week_handler,
+                        pass_user_data=True
+                    )
+                ]
+            },
+            per_user=True,
+            fallbacks=[]
+        )
+
+        dispatcher.add_handler(reg_conversation)
+        dispatcher.add_handler(retry_conversation)
         dispatcher.add_handler(CommandHandler('start', start_handler))
         # dispatcher.add_handler(constructor_handler)
         # dispatcher.add_handler(
