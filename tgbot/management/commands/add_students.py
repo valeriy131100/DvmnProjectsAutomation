@@ -1,8 +1,7 @@
 import json
-from tgbot.models import Student, ProjectManager, Project, SKILL_LEVEL_CHOICES
+from tgbot.models import Student
 from django.core.management.base import BaseCommand
 import requests
-import argparse
 
 
 def create_student(student):
@@ -43,7 +42,7 @@ class Command(BaseCommand):
             try:
                 add_students_to_db()
             except Exception as e:
-                print(e, "\nАдрес локального файла указан неверно")
+                print(e, "\nВ папке Students нет json файла")
 
         elif "http" in url:
             try:
@@ -52,6 +51,3 @@ class Command(BaseCommand):
                     create_student(student)
             except Exception as e:
                 print(e, "\nАдрес указан неверно")
-
-
-
