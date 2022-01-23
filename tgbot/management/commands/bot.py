@@ -9,7 +9,8 @@ from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler, 
                           MessageHandler, Updater)
 
 from projects_automation.settings import TELEGRAM_TOKEN, telegram_bot
-from tgbot.models import Student, Project, ProjectManager, ProjectTeam
+from tgbot.models import Student, Project, ProjectManager, ProjectTeam, \
+    check_slot_compatibility
 from django.db.models import Count
 
 
@@ -221,6 +222,7 @@ def retry_start_handler(update: Update, context: CallbackContext):
         ProjectTeam.objects.filter(project__pk=project_id)
                            .annotate(students_num=Count('students'))
                            .filter(students_num=2)
+                           .prefetch_related('students')
     )
 
     student = Student.objects.get(telegram_id=update.message.from_user.id)
@@ -229,7 +231,7 @@ def retry_start_handler(update: Update, context: CallbackContext):
         [f'Записаться в команду {team.id} '
          f'(собрания в {team.project_time.isoformat(timespec="minutes")})']
         for team in still_not_full_teams
-        if team.get_lvl() == student.get_lvl()
+        if check_slot_compatibility(student, list(team.students.all()))
     ]
 
     if student.preferred_week == 1:
