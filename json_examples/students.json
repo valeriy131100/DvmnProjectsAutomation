@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Валерий Ефремов",
+    "level": "novice+",
+    "telegram_id": "363741056",
+    "discord_username": "example#1234",
+    "is_far_east": false
+  },
+  {
+    "name": "Илья Габдрахманов",
+    "level": "novice",
+    "telegram_id": "181651413",
+    "discord_username": "example2#4321",
+    "is_far_east": false
+  },
+  {
+    "name": "Максим Кутовой",
+    "level": "junior",
+    "telegram_id": "479351324",
+    "discord_username": "example2#4321",
+    "is_far_east": true
+  }
+]

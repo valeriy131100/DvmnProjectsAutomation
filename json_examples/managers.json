@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Артем",
+    "telegram_id": "363741056",
+    "projects_time_begin": "20:00:00",
+    "projects_time_end": "23:00:00"
+  },
+  {
+    "name": "Екатерина",
+    "telegram_id": "181651413",
+    "projects_time_begin": "17:00:00",
+    "projects_time_end": "20:00:00"
+  },
+  {
+    "name": "Тим",
+    "telegram_id": "479351324",
+    "projects_time_begin": "18:00:00",
+    "projects_time_end": "21:00:00"
+  }
+]

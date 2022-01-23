@@ -1,6 +1,7 @@
 import json
-from tgbot.models import Student, ProjectManager, Project, SKILL_LEVEL_CHOICES
+from tgbot.models import Student
 from django.core.management.base import BaseCommand
+import requests
 
 
 def create_student(student):
@@ -21,11 +22,32 @@ def add_students_to_db():
             create_student(student)
 
 
-def main():
-    add_students_to_db()
+def get_json(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    students = response.json()
+
+    return students
 
 
 class Command(BaseCommand):
-    def handle(self, *args, **kwargs):
-        main()
 
+    def add_arguments(self, parser):
+        parser.add_argument("-j", "--json_path")
+
+    def handle(self, *args, **options):
+        url = options["json_path"]
+
+        if not url:
+            try:
+                add_students_to_db()
+            except Exception as e:
+                print(e, "\nВ папке Students нет json файла")
+
+        elif "http" in url:
+            try:
+                students = get_json(url)
+                for student in students:
+                    create_student(student)
+            except Exception as e:
+                print(e, "\nАдрес указан неверно")
