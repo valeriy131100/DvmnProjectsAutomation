@@ -73,21 +73,11 @@ class Student(models.Model):
         verbose_name='Ученики с которыми не должен попасть',
         related_name='excluded_by'
     )
-    included_students = models.ManyToManyField(
-        'Student',
-        verbose_name='Ученики с которыми должен попасть',
-        related_name='included_by'
-    )
 
     excluded_pms = models.ManyToManyField(
         'ProjectManager',
         verbose_name='ПМ\'ы с которыми не должен попасть',
         related_name='excluded_by'
-    )
-    included_pms = models.ManyToManyField(
-        'ProjectManager',
-        verbose_name='ПМ\'ы с которыми должен попасть',
-        related_name='included_by'
     )
 
     def __str__(self):
