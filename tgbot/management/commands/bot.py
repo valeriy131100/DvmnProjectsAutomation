@@ -1,6 +1,7 @@
 import re
 from datetime import date, time, timedelta
 
+import telegram
 from django.core.management.base import BaseCommand
 from django.db.models import Max, Min
 from telegram import (ReplyKeyboardRemove, Update, ReplyKeyboardMarkup)
@@ -168,12 +169,15 @@ def send_project_registration(telegram_id, project_id):
         ]
     ]
 
-    telegram_bot.send_message(
-        chat_id=telegram_id,
-        text='Привет! Снова пришла пора проектов. Нажми на кнопку ниже '
-             'если ты готов начать регистрацию',
-        reply_markup=ReplyKeyboardMarkup(keyboard)
-    )
+    try:
+        telegram_bot.send_message(
+            chat_id=telegram_id,
+            text='Привет! Снова пришла пора проектов. Нажми на кнопку ниже '
+                 'если ты готов начать регистрацию',
+            reply_markup=ReplyKeyboardMarkup(keyboard)
+        )
+    except telegram.error.BadRequest:
+        pass
 
 
 def write_time_to_db(update: Update, context: CallbackContext):
@@ -313,11 +317,14 @@ def retry_add_team_handler(update: Update, context: CallbackContext):
             f'В команду на {project_time} добавился ученик {student_link}'
         )
 
-        telegram_bot.send_message(
-            chat_id=pm.telegram_id,
-            text=pm_text,
-            parse_mode='HTML'
-        )
+        try:
+            telegram_bot.send_message(
+                chat_id=pm.telegram_id,
+                text=pm_text,
+                parse_mode='HTML'
+            )
+        except telegram.error.BadRequest:
+            pass
 
         return ConversationHandler.END
 
