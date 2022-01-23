@@ -30,6 +30,11 @@ def check_slot_compatibility(student, slot):
     if slot:
         if not get_slot_lvl(slot) == student.get_lvl():
             return False
+        for slot_student in slot:
+            if slot_student in student.excluded_students.all():
+                return False
+            elif slot_student in student.excluded_by.all():
+                return False
 
     return True
 
@@ -79,13 +84,15 @@ class Student(models.Model):
     excluded_students = models.ManyToManyField(
         'Student',
         verbose_name='Ученики с которыми не должен попасть',
-        related_name='excluded_by'
+        related_name='excluded_by',
+        blank=True
     )
 
     excluded_pms = models.ManyToManyField(
         'ProjectManager',
         verbose_name='ПМ\'ы с которыми не должен попасть',
-        related_name='excluded_by'
+        related_name='excluded_by',
+        blank=True
     )
 
     def __str__(self):
@@ -187,7 +194,10 @@ class Project(models.Model):
 
     def make_teams(self, week_num):
         pms = ProjectManager.objects.all()
-        students = list(Student.objects.filter(preferred_week=week_num))
+        students = list(Student.objects.filter(preferred_week=week_num)
+                                       .prefetch_related('excluded_by')
+                                       .prefetch_related('excluded_students')
+                                       .prefetch_related('excluded_pms'))
         for student in students:
             student.grouped = False
 
@@ -203,6 +213,9 @@ class Project(models.Model):
                         continue
 
                     if student.from_far_east:
+                        continue
+
+                    if pm in student.excluded_pms.all():
                         continue
 
                     begin_time = student.preferred_time_begin
