@@ -116,7 +116,7 @@ def choose_week(update: Update, context: CallbackContext):
 
 
 def choose_time(update: Update, context: CallbackContext):
-    buttons = []
+
     text = update.message.text
     user_id = update.effective_chat.id
     student = Student.objects.get(telegram_id=user_id)
@@ -130,36 +130,19 @@ def choose_time(update: Update, context: CallbackContext):
     min_available_time = time.strftime(available_time['start_time'], '%H:%M')
     max_available_time = time.strftime(available_time['end_time'], '%H:%M')
 
-    project_managers = ProjectManager.objects.all()
-    for manager in project_managers:
-        buttons += [str(meeting_time) for meeting_time in manager.get_time_slots()]
-    buttons = list(dict.fromkeys(buttons))
+    update.message.reply_text(
 
-    if context.user_data['from_far_east']:
-        update.message.reply_text(
-            'В какое время тебе было бы удобно созваниваться с ПМом? (время для ДВ) '
-            '(время указано по МСК)',
-            reply_markup=ReplyKeyboardMarkup(
-                keyboard=build_menu(buttons, n_cols=5),
-                resize_keyboard=True
-            ))
+        'Созвоны с ПМом и командой будут проходить каждый день, '
+        'кроме субботы и воскресенья. '
+        'И будут длиться примерно 30 мин. \n\n'
+        'В какое время тебе было бы удобно созваниваться с ПМом? '
+        f'В интервале с  {min_available_time} по {max_available_time} '
+        '(время указано по МСК) \n\n'
+        f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
+        reply_markup=ReplyKeyboardRemove()
+    )
 
-        return 'write_time_to_db'
-
-    else:
-        update.message.reply_text(
-
-            'Созвоны с ПМом и командой будут проходить каждый день, '
-            'кроме субботы и воскресенья. '
-            'И будут длиться примерно 30 мин. \n\n'
-            'В какое время тебе было бы удобно созваниваться с ПМом? '
-            f'В интервале с  {min_available_time} по {max_available_time} '
-            '(время указано по МСК) \n\n'
-            f'* Указать удобное время необходимо в формате {min_available_time}-{max_available_time}',
-            reply_markup=ReplyKeyboardRemove()
-        )
-
-        return 'write_time_to_db'
+    return 'write_time_to_db'
 
 
 def send_project_registration(telegram_id, project_id):
