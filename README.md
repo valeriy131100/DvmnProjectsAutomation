@@ -8,6 +8,8 @@
 
 ```sh
 TELEGRAM_TOKEN='ваш_токен'
+ALLOWED_HOSTS=127.0.0.1,Your.Server.Ip.Address
+DEBUG='True'
 ```
 
 ### Добавить студентов из json-файла
@@ -18,21 +20,21 @@ TELEGRAM_TOKEN='ваш_токен'
   {
     "name": "Валерий Ефремов",
     "level": "novice+",
-    "telegram_id": "ididididid",
+    "telegram_id": 34534324,
     "discord_username": "example#1234",
     "is_far_east": "False"
   },
   {
     "name": "Илья Габдрахманов",
     "level": "novice",
-    "telegram_id": "ididididid",
+    "telegram_id": 234234234,
     "discord_username": "example2#4321",
     "is_far_east": "False"
   },
   {
     "name": "Максим Кутовой",
     "level": "junior",
-    "telegram_id": "ididididid",
+    "telegram_id": 123123123,
     "discord_username": "example2#4321",
     "is_far_east": "True"
   }
@@ -53,19 +55,19 @@ python manage.py add_project_managers -j https://raw.githubusercontent.com/valer
 [
   {
     "name": "Артем",
-    "telegram_id": "12345678",
+    "telegram_id": 12345678,
     "projects_time_begin": "20:00:00",
     "projects_time_end": "23:00:00"
   },
   {
     "name": "Екатерина",
-    "telegram_id": "989898989",
+    "telegram_id": 989898989,
     "projects_time_begin": "17:00:00",
     "projects_time_end": "20:00:00"
   },
   {
     "name": "Тим",
-    "telegram_id": "124435653",
+    "telegram_id": 124435653,
     "projects_time_begin": "18:00:00",
     "projects_time_end": "21:00:00"
   }
