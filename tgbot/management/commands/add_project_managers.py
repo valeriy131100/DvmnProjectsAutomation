@@ -15,7 +15,7 @@ def create_manager(manager):
 
 
 def add_managers_to_db():
-    with open(file='./PMs/managers.json') as file:
+    with open(file='./PMs/managers.json', encoding='utf-8') as file:
         managers = json.load(file)
         json.dumps(managers)
         for manager in managers:
@@ -45,7 +45,7 @@ class Command(BaseCommand):
         if not url:
             try:
                 add_managers_to_db()
-            except Exception as e:
+            except FileNotFoundError as e:
                 print(e, "\nВ папке PMs нет json файла")
 
         elif "http" in url:

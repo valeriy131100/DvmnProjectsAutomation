@@ -15,7 +15,7 @@ def create_student(student):
 
 
 def add_students_to_db():
-    with open(file='./Students/students.json') as file:
+    with open(file='./Students/students.json', encoding='utf-8') as file:
         students = json.load(file)
         json.dumps(students)
         for student in students:
@@ -41,7 +41,7 @@ class Command(BaseCommand):
         if not url:
             try:
                 add_students_to_db()
-            except Exception as e:
+            except FileNotFoundError as e:
                 print(e, "\nВ папке Students нет json файла")
 
         elif "http" in url:
