@@ -1,12 +1,10 @@
-import telegram
-from projects_automation.settings import telegram_bot
-
 from collections import defaultdict
-
-from django.db import models
 from datetime import datetime, timedelta
 
+import telegram
+from django.db import models
 from django.db.models import Count
+from projects_automation.settings import telegram_bot
 
 SKILL_LEVEL_CHOICES = [
     ('novice', 'Новичок'),

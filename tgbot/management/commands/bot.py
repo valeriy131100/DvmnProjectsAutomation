@@ -3,15 +3,13 @@ from datetime import date, time, timedelta
 
 import telegram
 from django.core.management.base import BaseCommand
-from django.db.models import Max, Min
-from telegram import (ReplyKeyboardRemove, Update, ReplyKeyboardMarkup)
-from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler, Filters,
-                          MessageHandler, Updater)
-
+from django.db.models import Count, Max, Min
 from projects_automation.settings import TELEGRAM_TOKEN, telegram_bot
-from tgbot.models import Student, Project, ProjectManager, ProjectTeam, \
-    check_slot_compatibility
-from django.db.models import Count
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler,
+                          Filters, MessageHandler, Updater)
+from tgbot.models import (Project, ProjectManager, ProjectTeam, Student,
+                          check_slot_compatibility)
 
 
 def build_menu(buttons, n_cols,

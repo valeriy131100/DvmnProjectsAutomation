@@ -1,8 +1,9 @@
 import json
 import traceback
-from tgbot.models import Student
-from django.core.management.base import BaseCommand
+
 import requests
+from django.core.management.base import BaseCommand
+from tgbot.models import Student
 
 
 def create_student(student):

@@ -10,9 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
-import telegram
 from pathlib import Path
 
+import telegram
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from environs import Env
 
