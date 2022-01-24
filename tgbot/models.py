@@ -1,12 +1,10 @@
-import telegram
-from projects_automation.settings import telegram_bot
-
 from collections import defaultdict
-
-from django.db import models
 from datetime import datetime, timedelta
 
+import telegram
+from django.db import models
 from django.db.models import Count
+from projects_automation.settings import telegram_bot
 
 SKILL_LEVEL_CHOICES = [
     ('novice', 'Новичок'),
@@ -223,7 +221,11 @@ class Project(models.Model):
         verbose_name_plural = 'Проекты'
 
     def make_teams(self, week_num):
-        pms = ProjectManager.objects.all()
+        pms = (
+            ProjectManager.objects.all()
+                                  .annotate(excluded_num=Count('excluded_by'))
+                                  .order_by('excluded_num')
+        )
         students = list(Student.objects.filter(preferred_week=week_num)
                                        .prefetch_related('excluded_by')
                                        .prefetch_related('excluded_students')
@@ -308,12 +310,12 @@ class Project(models.Model):
         # если есть, то предлагаем их нераспределенным
         # не забудьте предложить только команды
         # у которых team.get_lvl() == student.get_lvl()
-
-        still_not_full_teams = list(
-            ProjectTeam.objects.filter(project=self)
-                               .annotate(students_num=Count('students'))
-                               .filter(students_num=2)
-        )
+        #
+        # still_not_full_teams = list(
+        #     ProjectTeam.objects.filter(project=self)
+        #                        .annotate(students_num=Count('students'))
+        #                        .filter(students_num=2)
+        # )
 
         ungrouped_students = [
             student for student in students if not student.grouped

@@ -1,7 +1,9 @@
 import json
-from tgbot.models import Student
-from django.core.management.base import BaseCommand
+import traceback
+
 import requests
+from django.core.management.base import BaseCommand
+from tgbot.models import Student
 
 
 def create_student(student):
@@ -14,8 +16,8 @@ def create_student(student):
     current_student.save()
 
 
-def add_students_to_db():
-    with open(file='./Students/students.json') as file:
+def add_students_to_db(path):
+    with open(path, encoding='utf-8') as file:
         students = json.load(file)
         json.dumps(students)
         for student in students:
@@ -25,29 +27,35 @@ def add_students_to_db():
 def get_json(url):
     response = requests.get(url)
     response.raise_for_status()
-    students = response.json()
+    json_ = response.json()
 
-    return students
+    return json_
 
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument("-j", "--json_path")
+        parser.add_argument('-u', '--url')
+        parser.add_argument('-p', '--path')
 
     def handle(self, *args, **options):
-        url = options["json_path"]
+        url = options['url']
+        path = options['path']
+        if not path:
+            path = './Students/students.json'
 
         if not url:
             try:
-                add_students_to_db()
-            except Exception as e:
-                print(e, "\nВ папке Students нет json файла")
+                add_students_to_db(path)
+            except FileNotFoundError:
+                traceback.print_exc()
+                print(f'\nФайл по пути {path} не найден')
 
-        elif "http" in url:
+        elif url:
             try:
                 students = get_json(url)
                 for student in students:
                     create_student(student)
-            except Exception as e:
-                print(e, "\nАдрес указан неверно")
+            except Exception:
+                traceback.print_exc()
+                print('\nНе удалось загрузить json с указанного адреса')

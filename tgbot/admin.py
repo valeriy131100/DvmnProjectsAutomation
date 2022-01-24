@@ -1,7 +1,6 @@
 from django.contrib import admin
-
-from tgbot.models import Student, ProjectManager, Project, ProjectTeam
 from tgbot.management.commands.bot import send_project_registration
+from tgbot.models import Project, ProjectManager, ProjectTeam, Student
 
 
 @admin.action(description='Создать команды на первую неделю')

@@ -10,9 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
-import telegram
 from pathlib import Path
 
+import telegram
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from environs import Env
 
@@ -24,7 +24,7 @@ env.read_env()
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t3uf18+c_4n)*-3c=yngh15rfd66zj8%(%i&09shc^$26x8&kk'
+SECRET_KEY = env.str('SECRET_KEY')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default='127.0.0.1')
 DEBUG = env.bool('DEBUG', default=True)
 TELEGRAM_TOKEN = env.str('TELEGRAM_TOKEN')
