@@ -42,7 +42,10 @@ TELEGRAM_TOKEN='ваш_токен'
 ```shell
 python manage.py add_students
 ```
-
+Также данный скрипт может принимать аргумент `-j` - `json_path`, если файл json находится, например, на [github.com](https://github.com/)
+```shell
+python manage.py add_project_managers -j https://raw.githubusercontent.com/valeriy131100/DvmnProjectsAutomation/main/json_examples/students.json
+```
 ### Добавить менеджеров из json-файла
 
 Для того, чтобы добавить всех менеджеров в базу данных, положите managers.json в папку PMs. Пример файла:
@@ -72,4 +75,8 @@ python manage.py add_students
 ```shell
 python manage.py add_project_managers
 ```
-
+Также данный скрипт может принимать аргумент `-j` - `json_path`, если файл json находится на [github.com](https://github.com/)
+```shell
+python manage.py add_project_managers -j https://raw.githubusercontent.com/valeriy131100/DvmnProjectsAutomation/main/json_examples/managers.json
+```
+Для получения адреса json-файла, расположенного на [github.com](https://github.com/), откройте json-файл в режиме просмотра в правом углу найдите кнопку 'Raw'
