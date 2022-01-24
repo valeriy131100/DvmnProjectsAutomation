@@ -312,12 +312,12 @@ class Project(models.Model):
         # если есть, то предлагаем их нераспределенным
         # не забудьте предложить только команды
         # у которых team.get_lvl() == student.get_lvl()
-
-        still_not_full_teams = list(
-            ProjectTeam.objects.filter(project=self)
-                               .annotate(students_num=Count('students'))
-                               .filter(students_num=2)
-        )
+        #
+        # still_not_full_teams = list(
+        #     ProjectTeam.objects.filter(project=self)
+        #                        .annotate(students_num=Count('students'))
+        #                        .filter(students_num=2)
+        # )
 
         ungrouped_students = [
             student for student in students if not student.grouped
