@@ -1,4 +1,5 @@
 import json
+import traceback
 from tgbot.models import ProjectManager
 from django.core.management.base import BaseCommand
 import requests
@@ -14,8 +15,8 @@ def create_manager(manager):
     current_manager.save()
 
 
-def add_managers_to_db():
-    with open(file='./PMs/managers.json', encoding='utf-8') as file:
+def add_managers_to_db(path):
+    with open(path, encoding='utf-8') as file:
         managers = json.load(file)
         json.dumps(managers)
         for manager in managers:
@@ -25,33 +26,35 @@ def add_managers_to_db():
 def get_json(url):
     response = requests.get(url)
     response.raise_for_status()
-    students = response.json()
+    json_ = response.json()
 
-    return students
-
-
-def main():
-    add_managers_to_db()
+    return json_
 
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument("-j", "--json_path")
+        parser.add_argument('-u', '--url')
+        parser.add_argument('-p', '--path')
 
     def handle(self, *args, **options):
-        url = options["json_path"]
+        url = options['url']
+        path = options['path']
+        if not path:
+            path = './PMs/managers.json'
 
         if not url:
             try:
-                add_managers_to_db()
-            except FileNotFoundError as e:
-                print(e, "\nВ папке PMs нет json файла")
+                add_managers_to_db(path)
+            except FileNotFoundError:
+                traceback.print_exc()
+                print(f'\nФайл по пути {path} не найден')
 
-        elif "http" in url:
+        elif url:
             try:
                 students = get_json(url)
                 for student in students:
                     create_manager(student)
-            except Exception as e:
-                print(e, "\nАдрес указан неверно")
+            except Exception:
+                traceback.print_exc()
+                print('\nНе удалось загрузить json с указанного адреса')

@@ -14,7 +14,7 @@ DEBUG='True'
 
 ### Добавить студентов из json-файла
 
-Для того, чтобы добавить всех студентов в базу данных, положите students.json в папку Students. Пример файла:
+Для того чтобы добавить всех студентов в базу данных, положите students.json в папку Students. Пример файла:
 ```json
 [
   {
@@ -44,13 +44,17 @@ DEBUG='True'
 ```shell
 python manage.py add_students
 ```
-Также данный скрипт может принимать аргумент `-j` - `json_path`, если файл json находится, например, на [github.com](https://github.com/)
+Если json-файл лежит в другом месте, то передайте параметр `-p`
 ```shell
-python manage.py add_project_managers -j https://raw.githubusercontent.com/valeriy131100/DvmnProjectsAutomation/main/json_examples/students.json
+python manage.py add_students -p some_folder/managers.json
+```
+Если json-файл лежит в интернете, то передайте адрес в параметре -u
+```shell
+python manage.py add_students -u https://raw.githubusercontent.com/valeriy131100/DvmnProjectsAutomation/main/json_examples/students.json
 ```
 ### Добавить менеджеров из json-файла
 
-Для того, чтобы добавить всех менеджеров в базу данных, положите managers.json в папку PMs. Пример файла:
+Для того чтобы добавить всех менеджеров в базу данных, положите managers.json в папку PMs. Пример файла:
 ```json
 [
   {
@@ -77,8 +81,12 @@ python manage.py add_project_managers -j https://raw.githubusercontent.com/valer
 ```shell
 python manage.py add_project_managers
 ```
-Также данный скрипт может принимать аргумент `-j` - `json_path`, если файл json находится на [github.com](https://github.com/)
+Если json-файл лежит в другом месте, то передайте параметр `-p`
 ```shell
-python manage.py add_project_managers -j https://raw.githubusercontent.com/valeriy131100/DvmnProjectsAutomation/main/json_examples/managers.json
+python manage.py add_project_managers -p some_folder/managers.json
+```
+Если json-файл лежит в интернете, то передайте адрес в параметре -u
+```shell
+python manage.py add_project_managers -u https://raw.githubusercontent.com/valeriy131100/DvmnProjectsAutomation/main/json_examples/managers.json
 ```
 Для получения адреса json-файла, расположенного на [github.com](https://github.com/), откройте json-файл в режиме просмотра в правом углу найдите кнопку 'Raw'
