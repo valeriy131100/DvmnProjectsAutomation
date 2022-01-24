@@ -37,7 +37,10 @@ def start_handler(update: Update, context: CallbackContext):
     context.user_data['start_date'] = start_date
     context.user_data['second_start_date'] = second_start_date
 
-    student = Student.objects.get(telegram_id=user_id)
+    try:
+        student = Student.objects.get(telegram_id=user_id)
+    except Student.DoesNotExist:
+        student = None
     first_name = update.effective_chat.first_name
 
     if not student:
