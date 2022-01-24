@@ -120,7 +120,11 @@ def choose_time(update: Update, context: CallbackContext):
     text = update.message.text
     user_id = update.effective_chat.id
     student = Student.objects.get(telegram_id=user_id)
-    student.project_date = date.fromisoformat(text)
+    project_date = date.fromisoformat(text)
+    if project_date == context.user_data['start_date']:
+        student.preferred_week = 1
+    elif project_date == context.user_data['second_start_date']:
+        student.preferred_week = 2
     student.save()
 
     available_time = ProjectManager.objects.all().aggregate(
