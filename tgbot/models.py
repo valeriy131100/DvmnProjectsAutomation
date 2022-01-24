@@ -223,7 +223,11 @@ class Project(models.Model):
         verbose_name_plural = 'Проекты'
 
     def make_teams(self, week_num):
-        pms = ProjectManager.objects.all()
+        pms = (
+            ProjectManager.objects.all()
+                                  .annotate(excluded_num=Count('excluded_by'))
+                                  .order_by('excluded_num')
+        )
         students = list(Student.objects.filter(preferred_week=week_num)
                                        .prefetch_related('excluded_by')
                                        .prefetch_related('excluded_students')
