@@ -30,6 +30,7 @@ pip install -r requirements.txt
 * TELEGRAM_TOKEN - токен бота Telegram. Можно получить у [@BotFather](https://t.me/BotFather).
 * ALLOWED_HOSTS - список разрешенных хостов через запятую. По умолчанию - `127.0.0.1`.
 * DEBUG - включить ли режим дебага в Django. Булево значение (True или False). По умолчанию - True.
+* SECRET_KEY - секретный ключ Django.
 
 ### Миграции
 
