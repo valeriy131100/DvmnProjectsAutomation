@@ -268,6 +268,9 @@ class Project(models.Model):
             for time_slot, slot_students in slots_with_students.items():
                 if 0 < len(slot_students) < 2:
                     for student in students:
+                        if pm in student.excluded_pms.all():
+                            continue
+
                         if student.from_far_east and not student.grouped:
                             if not check_slot_compatibility(student, slot_students):
                                 continue
@@ -288,6 +291,9 @@ class Project(models.Model):
                     continue
 
                 for student in students:
+                    if pm in student.excluded_pms.all():
+                        continue
+
                     if student.from_far_east and not student.grouped:
                         if not check_slot_compatibility(student, slot_students):
                             continue
